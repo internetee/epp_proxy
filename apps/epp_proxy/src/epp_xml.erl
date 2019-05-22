@@ -1,8 +1,16 @@
 -module(epp_xml).
 
--export([find_cltrid/1, parse/1]).
+-export([find_cltrid/1, get_command/1, parse/1]).
 
 -include_lib("xmerl/include/xmerl.hrl").
+
+%% Get command from an xmlElement. Otherwise return undefined.
+get_command(Record) when is_record(Record, xmlElement) ->
+    case xmerl_xpath:string("name(/epp/command/*[1])", Record) of
+        {xmlObj, string, []} -> undefined;
+        {xmlObj, string, Command} -> Command
+        end;
+get_command(_) -> undefined.
 
 %% xml_erl expects a list of characters, so let's give it to it.
 %% Otherwise return an error tuple.

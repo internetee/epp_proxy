@@ -15,6 +15,12 @@
            </command>
          </epp>").
 
+-define(validXMLNotEPPList,
+        "<user>
+           <name>test</name>
+           <email>test@test.com</email>
+         </user>").
+
 %% parse
 parse_not_a_list_or_binary_test() ->
     Input = 1234,
@@ -33,11 +39,11 @@ parse_sample_valid_xml_binary_test() ->
 
 parse_sample_invalid_xml_list_test() ->
     Input = "Some text",
-    {error, Error} = epp_xml:parse(Input).
+    {error, {fatal, _Details}} = epp_xml:parse(Input).
 
 parse_sample_invalid_xml_binary_test() ->
     Input = list_to_binary("Some text"),
-    {error, Error} = epp_xml:parse(Input).
+    {error, {fatal, _Details}} = epp_xml:parse(Input).
 
 %% find_cltrid
 find_cltrid_empty_list_test() ->
@@ -56,5 +62,19 @@ find_cltrid_binary_test() ->
     Input = ?sampleCommandList,
     ?assertEqual(<<"sample1trid">>, epp_xml:find_cltrid(Input)).
 
-
 %% get_command
+get_command_success_test() ->
+    %% We require an existing xlmElement record to pass around.
+    {ok, XMLElement} = epp_xml:parse(?sampleCommandList),
+    Command = epp_xml:get_command(XMLElement),
+    ?assertEqual("login", Command).
+
+get_command_xml_not_epp_failure_test() ->
+    {ok, XMLElement} = epp_xml:parse(?validXMLNotEPPList),
+    Command = epp_xml:get_command(XMLElement),
+    ?assertEqual(undefined, Command).
+
+get_command_failure_test() ->
+    %% Can pass any garbage, should get back undefined.,
+    Command = epp_xml:get_command("Some random string"),
+    ?assertEqual(undefined, Command).
