@@ -7,6 +7,7 @@
 
 all() -> [run_eunit].
 
-%% Run Unit tests
+%% Run Unit tests.
+%% Todo: these should be property tests, not unit tests.
 run_eunit(_Config) ->
     ok = eunit:test(epp_util_tests).
