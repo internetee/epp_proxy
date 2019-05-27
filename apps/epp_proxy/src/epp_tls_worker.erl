@@ -111,7 +111,6 @@ read_length(Socket) ->
 read_frame(Socket, FrameLength) ->
     case ssl:recv(Socket, FrameLength) of
         {ok, Data} ->
-            io:format("Frame: ~p~n", [Data]),
             {ok, Data};
         {error, Reason} ->
             io:format("Error: ~p~n", [Reason]),
