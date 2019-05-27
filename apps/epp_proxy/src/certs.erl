@@ -2,9 +2,17 @@
 
 -include_lib("public_key/include/public_key.hrl").
 
--export([read_pem_certificate/1, get_subject_from_otp_certificate/1,
-         get_common_name_from_subject/1, certificate_to_pem/1,
-         read_der_certificate/1]).
+-export([read_pem_certificate/1, subject_from_otp_certificate/1,
+         common_name_from_subject/1, certificate_to_pem/1,
+         read_der_certificate/1, headers_from_cert/1]).
+
+% Returns a tuple of headers {SSL_CLIENT_S_DN_CN, SLL_CLIENT_CERT}
+headers_from_cert(Der) ->
+    OTPCertificate = read_der_certificate(Der),
+    Subject = subject_from_otp_certificate(OTPCertificate),
+    CommonName = common_name_from_subject(Subject),
+    PEM = certificate_to_pem(OTPCertificate),
+    {CommonName, PEM}.
 
 %% Read certificate from the wire and return back an otp type record
 read_der_certificate(Der) ->
@@ -16,18 +24,19 @@ read_der_certificate(Der) ->
 certificate_to_pem(Certificate) ->
     PemEntry = {'Certificate', Certificate, not_encrypted},
     PemString = public_key:pem_encode([PemEntry]),
-    binary:replace(PemString, <<"\n">>, <<" ">>, [global]).
+    CleanBinary = binary:replace(PemString, <<"\n">>, <<" ">>, [global]),
+    CleanBinary.
 
 %% Read only a specific type of certificate, otherwise fail.
-get_subject_from_otp_certificate(Certificate) when is_record(Certificate, 'OTPCertificate') ->
+subject_from_otp_certificate(Certificate) when is_record(Certificate, 'OTPCertificate') ->
     Subject = Certificate#'OTPCertificate'.tbsCertificate#'OTPTBSCertificate'.subject,
     Subject.
 
 %% Take a subject rdnSequence that can be set into
 %% HTTP header SSL_CLIENT_S_DN_CN.
-get_common_name_from_subject(Subject) ->
+common_name_from_subject(Subject) ->
     CommonName = ?'id-at-commonName',
-    {_Type, Field} = get_field_from_subject(Subject, CommonName),
+    {_Type, Field} = field_from_subject(Subject, CommonName),
     Field.
 
 %% Only used for local development test, is not required for the application.
@@ -39,7 +48,7 @@ read_pem_certificate(PathToCert) ->
     Decoded = public_key:pkix_decode_cert(DerCert, otp),
     Decoded.
 
-get_field_from_subject({rdnSequence, Attributes}, Field) ->
+field_from_subject({rdnSequence, Attributes}, Field) ->
     FlatList = lists:flatten(Attributes),
     ValidAttrs = lists:filter(fun (X) ->
                                       X#'AttributeTypeAndValue'.type =:= Field
