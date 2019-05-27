@@ -1,4 +1,4 @@
--module(certs_SUITE).
+-module(epp_certs_SUITE).
 
 -include_lib("common_test/include/ct.hrl").
 
@@ -10,4 +10,4 @@ all() -> [run_eunit].
 %% Run Unit tests.
 %% Todo: these should be property tests, not unit tests.
 run_eunit(_Config) ->
-    ok = eunit:test(certs_tests).
+    ok = eunit:test(epp_certs_tests).

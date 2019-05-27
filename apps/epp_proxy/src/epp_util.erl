@@ -13,7 +13,7 @@ create_map(Pid) when is_pid(Pid) ->
 %% Given the special data structure, return back a binary hash to pass to the
 %% application server.
 -spec create_session_id(#{string() => pid(), string() => float(),
-                          string() => string()}) -> binary().
+                          string() => string()}) -> list(char()).
 create_session_id(#{"pid" := Pid, "random" := Random, "timestamp" := Timestamp}) ->
     Map = #{"pid" => pid_to_list(Pid), "random" => float_to_list(Random),
             "timestamp" => Timestamp},
@@ -21,4 +21,6 @@ create_session_id(#{"pid" := Pid, "random" := Random, "timestamp" := Timestamp})
     ListOfLists = [[X, ",", Y] || {X, Y} <- ListOfTuples],
     NestedList = lists:join(",",ListOfLists),
     ListOfGlyphs = lists:flatten(NestedList),
-    crypto:hash(sha512, ListOfGlyphs).
+    BinaryHash = crypto:hash(sha512, ListOfGlyphs),
+    String = lists:flatten([integer_to_list(X,16) || <<X>> <= BinaryHash]),
+    String.

@@ -20,7 +20,7 @@
 %%====================================================================
 
 start_link() ->
-    supervisor:start_link(epp_proxy_sup, []).
+    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 %%====================================================================
 %% Supervisor callbacks
@@ -30,13 +30,17 @@ start_link() ->
 %% Optional keys are restart, shutdown, type, modules.
 %% Before OTP 18 tuples must be used to specify a child. e.g.
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
-init(_Args) ->
-    SupFlags = #{strategy => one_for_one, intensity => 1, period => 5},
-    ChildSpecs = [#{id => tls_server,
-                    start => {epp_tls, start_link, [4444]}}
-                  #{id => tcp_server,
-                    start => {epp_tcp, start_link, [3333]}}],
-    {ok, {SupFlags, ChildSpecs}}.
+init([]) ->
+    SupFlags = #{strategy => one_for_one, intensity => 3, period => 60},
+    TCPAcceptor = #{id => epp_tcp_acceptor,
+            type => worker,
+            modules => [epp_tcp_acceptor],
+            start => {epp_tcp_acceptor, start_link, [3333]}},
+    PoolSupervisor = #{id => pool_supervisor,
+            type => supervisor,
+            modules => [pool_supervisor],
+            start => {pool_supervisor, start_link, []}},
+    {ok, {SupFlags, [TCPAcceptor, PoolSupervisor]}}.
 
 %%====================================================================
 %% Internal functions

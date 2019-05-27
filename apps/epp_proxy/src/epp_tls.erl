@@ -1,16 +1,19 @@
 -module(epp_tls).
 
 -behaviour(supervisor).
+-define(SERVER, ?MODULE).
+
 -export([start_link/1, init/1, serve/1]).
 
 start_link(Port) ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, Port).
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [Port]).
 
-init(Port) ->
-    SupFlags = #{strategy => one_for_one, intensity => 1, period => 5},
+init([Port]) ->
+    process_flag(trap_exit, true),
+    SupFlags = #{strategy => one_for_one, intensity => 3, period => 60},
     ChildSpecs = [],
-    accept(Port),
     log_message(Port),
+    accept(Port),
     {ok, {SupFlags, ChildSpecs}}.
 
 accept(Port) ->
@@ -25,20 +28,23 @@ accept(Port) ->
                {keyfile, "/Users/maciej/Development/internetee/docker-images/shared/ca/private/apache.key"}],
 
     {ok, ListenSocket} = ssl:listen(Port, Options),
-    loop_acceptor(ListenSocket).
+    spawn_monitor(fun () -> loop_acceptor(ListenSocket) end).
 
 loop_acceptor(ListenSocket) ->
-    {ok, Client} = ssl:transport_accept(ListenSocket),
-    Pid = spawn_link(?MODULE, serve, [Client]),
-    logger:info("PID: ~p", [Pid]),
-    ok = ssl:controlling_process(Client, Pid),
+    case ssl:transport_accept(ListenSocket) of
+        {error, closed} -> exit(shutdown);
+        {ok, Client} ->
+            Pid = spawn_link(?MODULE, serve, [Client]),
+            logger:info("PID: ~p", [Pid]),
+            ok = ssl:controlling_process(Client, Pid)
+    end,
     loop_acceptor(ListenSocket).
 
 serve(Client) ->
     {ok, TSocket} = ssl:handshake(Client),
-    {ok, ClientCert} = ssl:peername(TSocket),
-    logger:info("Client name ~s", [ClientCert]),
-    timer:sleep(1000),
+    {ok, ClientCert} = ssl:peercert(TSocket),
+    logger:info("Client cert ~s", [ClientCert]),
+    timer:sleep(100000),
     exit(shutdown).
 
 log_message(Port) ->

@@ -1,26 +1,26 @@
--module(certs_tests).
+-module(epp_certs_tests).
 
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("public_key/include/public_key.hrl").
 
 -define(exampleCertFile, "fixtures/epp-proxy-test.crt.pem").
 
-read_der_certificate_test() ->
+wder_certificate_test() ->
     PemEntries = public_key:pem_decode(certificate_pem()),
     {value, CertEntry} = lists:keysearch('Certificate', 1, PemEntries),
     {_, DerCert, _} = CertEntry,
-    Certificate = certs:read_der_certificate(DerCert),
+    Certificate = epp_certs:der_certificate(DerCert),
     ?assert(is_record(Certificate, 'OTPCertificate')).
 
-get_subject_from_otp_certificate_test() ->
+subject_from_otp_certificate_test() ->
     Certificate = test_certificate(),
-    Subject = certs:get_subject_from_otp_certificate(Certificate),
+    Subject = epp_certs:subject_from_otp_certificate(Certificate),
     {rdnSequence, ListOfAttributes} = Subject.
 
-get_common_name_from_subject_test() ->
+common_name_from_subject_test() ->
     Certificate = test_certificate(),
-    Subject = certs:get_subject_from_otp_certificate(Certificate),
-    CommonName = certs:get_common_name_from_subject(Subject),
+    Subject = epp_certs:subject_from_otp_certificate(Certificate),
+    CommonName = epp_certs:common_name_from_subject(Subject),
     ?assertEqual(<<"Epp Proxy Test">>, CommonName).
 
 test_certificate() ->

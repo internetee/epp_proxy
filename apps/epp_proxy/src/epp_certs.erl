@@ -1,21 +1,21 @@
--module(certs).
+-module(epp_certs).
 
 -include_lib("public_key/include/public_key.hrl").
 
--export([read_pem_certificate/1, subject_from_otp_certificate/1,
+-export([pem_certificate/1, subject_from_otp_certificate/1,
          common_name_from_subject/1, certificate_to_pem/1,
-         read_der_certificate/1, headers_from_cert/1]).
+         der_certificate/1, headers_from_cert/1]).
 
 % Returns a tuple of headers {SSL_CLIENT_S_DN_CN, SLL_CLIENT_CERT}
 headers_from_cert(Der) ->
-    OTPCertificate = read_der_certificate(Der),
+    OTPCertificate = der_certificate(Der),
     Subject = subject_from_otp_certificate(OTPCertificate),
     CommonName = common_name_from_subject(Subject),
     PEM = certificate_to_pem(OTPCertificate),
     {CommonName, PEM}.
 
 %% Read certificate from the wire and return back an otp type record
-read_der_certificate(Der) ->
+der_certificate(Der) ->
     Certificate = public_key:pkix_decode_cert(Der, otp),
     Certificate.
 
@@ -40,8 +40,8 @@ common_name_from_subject(Subject) ->
     Field.
 
 %% Only used for local development test, is not required for the application.
-read_pem_certificate(PathToCert) ->
-    {ok, PemBin} = file:read_file(PathToCert),
+pem_certificate(PathToCert) ->
+    {ok, PemBin} = file:file(PathToCert),
     PemEntries = public_key:pem_decode(PemBin),
     {value, CertEntry} = lists:keysearch('Certificate', 1, PemEntries),
     {_, DerCert, _} = CertEntry,

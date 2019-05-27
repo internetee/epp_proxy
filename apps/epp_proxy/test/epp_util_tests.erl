@@ -15,8 +15,5 @@ create_session_id_test() ->
     Time = "2019-05-23T14:47:52+03:00",
     Map = #{"pid" => Pid, "random" => Random, "timestamp" => Time},
     Hash = epp_util:create_session_id(Map),
-    ?assert(is_binary(Hash)),
-    ?assertEqual(<<136,244,9,194,177,11,221,111,35,85,191,68,36,166,124,146,
-                   141,167,197,97,107,48,247,197,179,95,23,7,71,52,138,246,30,
-                   248,114,62,214,190,96,18,216,121,203,61,106,126,199,161,135,
-                   102,0,165,105,16,237,137,106,230,125,229,51,194,1,45>>, Hash).
+    ?assert(is_list(Hash)),
+    ?assertEqual("88F49C2B1BDD6F2355BF4424A67C928DA7C5616B30F7C5B35F17747348AF61EF8723ED6BE6012D879CB3D6A7EC7A187660A56910ED896AE67DE533C212D", Hash).
