@@ -1,4 +1,4 @@
--module(router).
+-module(epp_router).
 
 -export([route_request/1, is_valid_epp_command/1]).
 

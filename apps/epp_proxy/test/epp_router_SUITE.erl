@@ -1,4 +1,4 @@
--module(router_SUITE).
+-module(epp_router_SUITE).
 
 -include_lib("common_test/include/ct.hrl").
 
@@ -9,4 +9,4 @@ all() -> [run_eunit].
 
 %% Run Unit tests
 run_eunit(_Config) ->
-    ok = eunit:test(router_tests).
+    ok = eunit:test(epp_router_tests).

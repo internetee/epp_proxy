@@ -1,4 +1,4 @@
--module(pool_supervisor).
+-module(epp_pool_supervisor).
 
 -behaviour(supervisor).
 

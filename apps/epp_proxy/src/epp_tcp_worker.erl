@@ -10,7 +10,7 @@
 -record(state,{socket, length, session_id}).
 
 init(Socket) ->
-    logger:info("Created a test process"),
+    logger:info("Created a worker process"),
     {ok, #state{socket=Socket}}.
 
 start_link(Socket) ->
@@ -20,12 +20,13 @@ handle_cast(serve, State = #state{socket=Socket}) ->
     {noreply, State#state{socket=Socket}};
 handle_cast(greeting, State = #state{socket=Socket}) ->
     SessionId = session_id(),
+    Cookie = hackney_cookie:setcookie("session", SessionId, []),
 
-    {Status, StatusCode, Headers, ClientRef} =
-        hackney:request(get, router:route_request("hello"), [], "",
-                        [{cookie, [<<"session=">>, SessionId]}, insecure]),
+    {_Status, _StatusCode, _Headers, ClientRef} =
+        hackney:request(get, epp_router:route_request("hello"), [], "",
+                        [{cookie, Cookie}, insecure]),
 
-    Body = <<"Some BODY">>,
+    {ok, Body} = hackney:body(ClientRef),
 
     Length = byte_size(Body) + 4,
     ByteSize = << Length:32/big >>,
@@ -33,7 +34,7 @@ handle_cast(greeting, State = #state{socket=Socket}) ->
     write_line(Socket, ByteSize),
     write_line(Socket, Body),
     gen_server:cast(self(), read_length),
-    {noreply, State#state{socket=Socket}};
+    {noreply, State#state{socket=Socket, session_id=SessionId}};
 handle_cast(read_length, State = #state{socket=Socket}) ->
     case read_length(Socket) of
         {ok, Data} ->
