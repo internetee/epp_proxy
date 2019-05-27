@@ -14,6 +14,18 @@
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
+-define(TCPPort,
+        case application:get_env(epp_proxy, tcp_port) of
+            undefined -> undefined;
+            {ok, Value} -> Value
+            end).
+
+-define(TLSPort,
+        case application:get_env(epp_proxy, tls_port) of
+            undefined -> undefined;
+            {ok, Val} -> Val
+            end).
+
 
 %%====================================================================
 %% API functions
@@ -35,11 +47,11 @@ init([]) ->
     TCPAcceptor = #{id => epp_tcp_acceptor,
             type => worker,
             modules => [epp_tcp_acceptor],
-            start => {epp_tcp_acceptor, start_link, [3333]}},
+            start => {epp_tcp_acceptor, start_link, [?TCPPort]}},
     TLSAcceptor = #{id => epp_tls_acceptor,
             type => worker,
             modules => [epp_tls_acceptor],
-            start => {epp_tls_acceptor, start_link, [4444]}},
+            start => {epp_tls_acceptor, start_link, [?TLSPort]}},
     PoolSupervisor = #{id => epp_pool_supervisor,
             type => supervisor,
             modules => [epp_pool_supervisor],

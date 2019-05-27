@@ -7,18 +7,18 @@
 -define(WORKER, epp_tls_worker).
 
 -define(CaCertFile,
-        case application:get_env(epp_proxy, epp_cacertfile_path) of
+        case application:get_env(epp_proxy, cacertfile_path) of
             undefined -> undefined;
             {ok, Value} -> Value
             end).
 
 -define(CertFile,
-        case application:get_env(epp_proxy, epp_certfile_path) of
+        case application:get_env(epp_proxy, certfile_path) of
             undefined -> undefined;
             {ok, Value} -> Value
             end).
 -define(KeyFile,
-        case application:get_env(epp_proxy, epp_keyfile_path) of
+        case application:get_env(epp_proxy, keyfile_path) of
             undefined -> undefined;
             {ok, Value} -> Value
             end).
