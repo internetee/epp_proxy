@@ -15,7 +15,7 @@ wder_certificate_test() ->
 subject_from_otp_certificate_test() ->
     Certificate = test_certificate(),
     Subject = epp_certs:subject_from_otp_certificate(Certificate),
-    {rdnSequence, ListOfAttributes} = Subject.
+    {rdnSequence, _ListOfAttributes} = Subject.
 
 common_name_from_subject_test() ->
     Certificate = test_certificate(),

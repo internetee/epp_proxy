@@ -1,4 +1,4 @@
--module(epp_tcp_worker).
+-module(epp_tls_worker).
 
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).
@@ -7,9 +7,9 @@
 -export([init/1, handle_cast/2, handle_call/3, start_link/1]).
 -export([code_change/3]).
 
--export([request/3]).
+-export([request/5]).
 
--record(state,{socket, length, session_id}).
+-record(state,{socket, length, session_id, common_name, client_cert}).
 -record(request,{method, url, body, cookies, headers}).
 
 init(Socket) ->
@@ -21,9 +21,18 @@ start_link(Socket) ->
     gen_server:start_link(?MODULE, Socket, []).
 
 handle_cast(serve, State = #state{socket=Socket}) ->
-    {noreply, State#state{socket=Socket}};
-handle_cast(greeting, State = #state{socket=Socket, session_id=SessionId}) ->
-    Request = request("hello", SessionId, ""),
+    {ok, SecureSocket} = ssl:handshake(Socket),
+    {ok, PeerCert} = ssl:peercert(SecureSocket),
+    {SSL_CLIENT_S_DN_CN, SSL_CLIENT_CERT} =
+        epp_certs:headers_from_cert(PeerCert),
+
+    {noreply, State#state{socket=SecureSocket, common_name=SSL_CLIENT_S_DN_CN,
+                          client_cert=SSL_CLIENT_CERT}};
+handle_cast(greeting, State = #state{socket=Socket, common_name=SSL_CLIENT_S_DN_CN,
+                                     client_cert=SSL_CLIENT_CERT,
+                                     session_id=SessionId}) ->
+    Request = request("hello", SessionId, "", SSL_CLIENT_S_DN_CN,
+                      SSL_CLIENT_CERT),
     logger:info("Request: ~p~n", [Request]),
 
     {_Status, _StatusCode, _Headers, ClientRef} =
@@ -36,8 +45,10 @@ handle_cast(greeting, State = #state{socket=Socket, session_id=SessionId}) ->
     frame_to_socket(Body, Socket),
     gen_server:cast(self(), process_command),
     {noreply, State#state{socket=Socket, session_id=SessionId}};
-
-handle_cast(process_command, State = #state{socket=Socket, session_id=SessionId}) ->
+handle_cast(process_command, State = #state{socket=Socket,
+                                            common_name=SSL_CLIENT_S_DN_CN,
+                                            client_cert=SSL_CLIENT_CERT,
+                                            session_id=SessionId}) ->
     Length = case read_length(Socket) of
         {ok, Data} ->
             Data;
@@ -56,7 +67,8 @@ handle_cast(process_command, State = #state{socket=Socket, session_id=SessionId}
     {ok, XMLRecord} = epp_xml:parse(Frame),
     Command = epp_xml:get_command(XMLRecord),
 
-    Request = request(Command, SessionId, Frame),
+    Request = request(Command, SessionId, Frame, SSL_CLIENT_S_DN_CN,
+                      SSL_CLIENT_CERT),
     logger:info("Request: ~p~n", [Request]),
 
     {_Status, _StatusCode, _Headers, ClientRef} =
@@ -72,22 +84,21 @@ handle_cast(process_command, State = #state{socket=Socket, session_id=SessionId}
     %% Else, go back to the beginning of the loop.
     if
         Command =:= "logout" ->
-            ok = gen_tcp:shutdown(Socket, read_write),
+            ok = ssl:shutdown(Socket, read_write),
             {stop, normal, State};
         true ->
             gen_server:cast(self(), process_command),
             {noreply, State#state{socket=Socket, session_id=SessionId}}
     end.
-
 handle_call(_E, _From, State) -> {noreply, State}.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 %% Private function
 write_line(Socket, Line) ->
-    ok = gen_tcp:send(Socket, Line).
+    ok = ssl:send(Socket, Line).
 
 read_length(Socket) ->
-    case gen_tcp:recv(Socket, 4) of
+    case ssl:recv(Socket, 4) of
         {ok, Data} ->
             Length = binary:decode_unsigned(Data, big),
             LengthToReceive = epp_util:frame_length_to_receive(Length),
@@ -98,7 +109,7 @@ read_length(Socket) ->
     end.
 
 read_frame(Socket, FrameLength) ->
-    case gen_tcp:recv(Socket, FrameLength) of
+    case ssl:recv(Socket, FrameLength) of
         {ok, Data} ->
             io:format("Frame: ~p~n", [Data]),
             {ok, Data};
@@ -113,7 +124,7 @@ session_id() ->
     BinaryHash.
 
 %% Map request and return values
-request(Command, SessionId, RawFrame) ->
+request(Command, SessionId, RawFrame, CommonName, ClientCert) ->
     URL = epp_router:route_request(Command),
     RequestMethod = request_method(Command),
     Cookie = hackney_cookie:setcookie("session", SessionId, []),
@@ -123,7 +134,8 @@ request(Command, SessionId, RawFrame) ->
         _ ->
             Body = {multipart, [{<<"raw_frame">>, RawFrame}]}
         end,
-    Headers = [],
+    Headers = [{"SSL_CLIENT_CERT", ClientCert},
+               {"SSL_CLIENT_S_DN_CN", CommonName}],
     #request{url=URL, method=RequestMethod, body=Body, cookies=[Cookie],
              headers=Headers}.
 

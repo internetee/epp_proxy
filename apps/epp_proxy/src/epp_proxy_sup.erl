@@ -36,11 +36,15 @@ init([]) ->
             type => worker,
             modules => [epp_tcp_acceptor],
             start => {epp_tcp_acceptor, start_link, [3333]}},
-    PoolSupervisor = #{id => pool_supervisor,
+    TLSAcceptor = #{id => epp_tls_acceptor,
+            type => worker,
+            modules => [epp_tls_acceptor],
+            start => {epp_tls_acceptor, start_link, [4444]}},
+    PoolSupervisor = #{id => epp_pool_supervisor,
             type => supervisor,
-            modules => [pool_supervisor],
-            start => {pool_supervisor, start_link, []}},
-    {ok, {SupFlags, [TCPAcceptor, PoolSupervisor]}}.
+            modules => [epp_pool_supervisor],
+            start => {epp_pool_supervisor, start_link, []}},
+    {ok, {SupFlags, [TCPAcceptor, TLSAcceptor, PoolSupervisor]}}.
 
 %%====================================================================
 %% Internal functions

@@ -6,12 +6,13 @@
          common_name_from_subject/1, certificate_to_pem/1,
          der_certificate/1, headers_from_cert/1]).
 
-% Returns a tuple of headers {SSL_CLIENT_S_DN_CN, SLL_CLIENT_CERT}
+% Returns a tuple of headers {SSL_CLIENT_S_DN_CN, SSL_CLIENT_CERT}
 headers_from_cert(Der) ->
     OTPCertificate = der_certificate(Der),
     Subject = subject_from_otp_certificate(OTPCertificate),
     CommonName = common_name_from_subject(Subject),
-    PEM = certificate_to_pem(OTPCertificate),
+    logger:info("~p~n", [CommonName]),
+    PEM = certificate_to_pem(Der),
     {CommonName, PEM}.
 
 %% Read certificate from the wire and return back an otp type record

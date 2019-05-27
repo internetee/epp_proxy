@@ -1,6 +1,9 @@
 -module(epp_util).
 
--export([create_map/1, create_session_id/1]).
+-export([create_map/1, create_session_id/1, frame_length/1,
+         frame_length_to_receive/1, frame_length_to_send/1]).
+
+-define(OFFSET, 4).
 
 % Give me a process id, I'll create a random map for you.
 -spec create_map(pid()) -> #{string() => pid(), string() => float(),
@@ -24,3 +27,16 @@ create_session_id(#{"pid" := Pid, "random" := Random, "timestamp" := Timestamp})
     BinaryHash = crypto:hash(sha512, ListOfGlyphs),
     String = lists:flatten([integer_to_list(X,16) || <<X>> <= BinaryHash]),
     String.
+
+frame_length_to_receive(Size) when Size >= 0 ->
+    Size - ?OFFSET.
+
+frame_length_to_send(Frame) ->
+    Length = frame_length(Frame),
+    Length + ?OFFSET.
+
+frame_length(Frame) when is_binary(Frame) ->
+    byte_size(Frame);
+frame_length(Frame) when is_list(Frame) ->
+    Bin = unicode:characters_to_binary(Frame),
+    byte_size(Bin).
