@@ -6,7 +6,7 @@
 -define(exampleCertFile, lists:flatten([code:lib_dir(epp_proxy, priv),
                                         "epp-proxy-test.crt.pem"])).
 
-wder_certificate_test() ->
+der_certificate_test() ->
     PemEntries = public_key:pem_decode(certificate_pem()),
     {value, CertEntry} = lists:keysearch('Certificate', 1, PemEntries),
     {_, DerCert, _} = CertEntry,

@@ -12,7 +12,7 @@
 
 init(Socket) ->
     logger:info("Created a worker process"),
-    SessionId = session_id(),
+    SessionId = epp_util:session_id(self()),
     {ok, #state{socket=Socket, session_id=SessionId}}.
 
 start_link(Socket) ->
@@ -104,15 +104,10 @@ read_frame(Socket, FrameLength) ->
             {error, Reason}
     end.
 
-session_id() ->
-    UniqueMap = epp_util:create_map(self()),
-    BinaryHash = epp_util:create_session_id(UniqueMap),
-    BinaryHash.
-
 %% Map request and return values
 request(Command, SessionId, RawFrame) ->
     URL = epp_router:route_request(Command),
-    RequestMethod = request_method(Command),
+    RequestMethod = epp_router:request_method(Command),
     Cookie = hackney_cookie:setcookie("session", SessionId, []),
     case Command of
         "hello" ->
@@ -123,14 +118,6 @@ request(Command, SessionId, RawFrame) ->
     Headers = [],
     #request{url=URL, method=RequestMethod, body=Body, cookies=[Cookie],
              headers=Headers}.
-
-%% request method: GET for greeting, POST for everything else.
-request_method("hello") ->
-    get;
-request_method(<<"hello">>) ->
-    get;
-request_method(_) ->
-    post.
 
 %% Wrap a message in EPP frame, and then send it to socket.
 frame_to_socket(Message, Socket) ->

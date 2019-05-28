@@ -10,6 +10,12 @@ is_valid_epp_command_test() ->
                   end,
                   Commands).
 
+request_method_test() ->
+    ?assertEqual(get, epp_router:request_method("hello")),
+    ?assertEqual(get, epp_router:request_method(<<"hello">>)),
+    ?assertEqual(post, epp_router:request_method("create")),
+    ?assertEqual(post, epp_router:request_method(123)).
+
 %% TODO: Make less verbose and repetitive
 hello_url_test() ->
     ?assertEqual("https://registry.test/epp/session/hello", epp_router:route_request("hello")),

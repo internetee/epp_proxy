@@ -1,6 +1,6 @@
 -module(epp_router).
 
--export([route_request/1, is_valid_epp_command/1]).
+-export([route_request/1, is_valid_epp_command/1, request_method/1]).
 
 -define(validCommands, ["hello", "login", "logout", "check", "info", "poll",
                         "create", "delete", "renew", "update", "transfer"]).
@@ -21,6 +21,14 @@
 %% Save yourself some checking beforehand.
 is_valid_epp_command(Command) ->
     lists:member(Command, ?validCommands).
+
+%% request method: GET for greeting, POST for everything else.
+request_method("hello") ->
+    get;
+request_method(<<"hello">>) ->
+    get;
+request_method(_) ->
+    post.
 
 %% Base router
 route_request(Command) when is_binary(Command) ->
