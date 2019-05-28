@@ -14,6 +14,7 @@
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
+-define(DevMode, application:get_env(epp_proxy, dev_mode)).
 -define(TCPPort,
         case application:get_env(epp_proxy, tcp_port) of
             undefined -> undefined;
@@ -56,7 +57,11 @@ init([]) ->
             type => supervisor,
             modules => [epp_pool_supervisor],
             start => {epp_pool_supervisor, start_link, []}},
-    {ok, {SupFlags, [TCPAcceptor, TLSAcceptor, PoolSupervisor]}}.
+    ChildrenSpec = case ?DevMode of
+                       {ok, true}  -> [TCPAcceptor, TLSAcceptor, PoolSupervisor];
+                       _  -> [TLSAcceptor, PoolSupervisor]
+                       end,
+    {ok, {SupFlags, ChildrenSpec}}.
 
 %%====================================================================
 %% Internal functions
