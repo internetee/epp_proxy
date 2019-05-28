@@ -3,7 +3,8 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("public_key/include/public_key.hrl").
 
--define(exampleCertFile, "fixtures/epp-proxy-test.crt.pem").
+-define(exampleCertFile, lists:flatten([code:lib_dir(epp_proxy, priv),
+                                        "epp-proxy-test.crt.pem"])).
 
 wder_certificate_test() ->
     PemEntries = public_key:pem_decode(certificate_pem()),

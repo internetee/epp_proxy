@@ -5,8 +5,8 @@
   {mod, {epp_proxy_app, []}},
   {applications,
    [kernel,
-    stdlib
-   ]},
+    stdlib,
+    ssl]},
   {env,[]},
   {modules, []},
 
