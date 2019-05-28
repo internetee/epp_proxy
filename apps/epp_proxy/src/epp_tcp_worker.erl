@@ -3,12 +3,13 @@
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).
 
+-include("epp_proxy.hrl").
+
 %% gen_server callbacks
 -export([init/1, handle_cast/2, handle_call/3, start_link/1]).
 -export([code_change/3]).
 
 -record(state,{socket, length, session_id}).
--record(request,{method, url, body, cookies, headers}).
 
 init(Socket) ->
     logger:info("Created a worker process"),
@@ -25,9 +26,9 @@ handle_cast(greeting, State = #state{socket=Socket, session_id=SessionId}) ->
     logger:info("Request: ~p~n", [Request]),
 
     {_Status, _StatusCode, _Headers, ClientRef} =
-        hackney:request(Request#request.method, Request#request.url,
-                        Request#request.headers, Request#request.body,
-                        [{cookie, Request#request.cookies}, insecure]),
+        hackney:request(Request#epp_request.method, Request#epp_request.url,
+                        Request#epp_request.headers, Request#epp_request.body,
+                        [{cookie, Request#epp_request.cookies}, insecure]),
 
     {ok, Body} = hackney:body(ClientRef),
 
@@ -58,9 +59,9 @@ handle_cast(process_command, State = #state{socket=Socket, session_id=SessionId}
     logger:info("Request: ~p~n", [Request]),
 
     {_Status, _StatusCode, _Headers, ClientRef} =
-        hackney:request(Request#request.method, Request#request.url,
-                        Request#request.headers, Request#request.body,
-                        [{cookie, Request#request.cookies}, insecure]),
+        hackney:request(Request#epp_request.method, Request#epp_request.url,
+                        Request#epp_request.headers, Request#epp_request.body,
+                        [{cookie, Request#epp_request.cookies}, insecure]),
 
     {ok, Body} = hackney:body(ClientRef),
 
@@ -115,8 +116,8 @@ request(Command, SessionId, RawFrame) ->
         _ ->
             Body = {multipart, [{<<"raw_frame">>, RawFrame}]}
         end,
-    Headers = [],
-    #request{url=URL, method=RequestMethod, body=Body, cookies=[Cookie],
+    Headers = [{"User-Agent", <<"EPP proxy">>}],
+    #epp_request{url=URL, method=RequestMethod, body=Body, cookies=[Cookie],
              headers=Headers}.
 
 %% Wrap a message in EPP frame, and then send it to socket.
