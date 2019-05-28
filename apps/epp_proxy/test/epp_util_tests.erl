@@ -2,6 +2,12 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+session_id_test() ->
+    Pid = spawn(fun () -> ok end),
+    SessionId = epp_util:session_id(Pid),
+    ?assert(is_list(SessionId)),
+    ?assert(length(SessionId) > 0).
+
 create_map_test() ->
     Pid = spawn(fun () -> ok end),
     Map = epp_util:create_map(Pid),

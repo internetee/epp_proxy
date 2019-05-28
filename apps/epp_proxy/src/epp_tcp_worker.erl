@@ -7,8 +7,6 @@
 -export([init/1, handle_cast/2, handle_call/3, start_link/1]).
 -export([code_change/3]).
 
--export([request/3]).
-
 -record(state,{socket, length, session_id}).
 -record(request,{method, url, body, cookies, headers}).
 

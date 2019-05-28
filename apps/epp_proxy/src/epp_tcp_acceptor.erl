@@ -24,7 +24,8 @@ init(Port) ->
 
     {ok, #state{socket=ListenSocket, port=Port, options=Options}}.
 
-handle_cast(accept, State = #state{socket=ListenSocket, port=Port, options=Options}) ->
+handle_cast(accept,
+            State = #state{socket=ListenSocket, port=Port, options=Options}) ->
     {ok, AcceptSocket} = gen_tcp:accept(ListenSocket),
     {ok, NewOwner} = create_worker(AcceptSocket),
     ok = gen_tcp:controlling_process(AcceptSocket, NewOwner),

@@ -1,11 +1,19 @@
 -module(epp_util).
 
 -export([create_map/1, create_session_id/1, frame_length/1,
-         frame_length_to_receive/1, frame_length_to_send/1]).
+         frame_length_to_receive/1, frame_length_to_send/1,
+         session_id/1]).
 
 -define(OFFSET, 4).
 
-% Give me a process id, I'll create a random map for you.
+%% Given a pid, return a sha512 hash of unique attributes.
+-spec session_id(pid()) -> list(char()).
+session_id(Pid) ->
+    UniqueMap = create_map(Pid),
+    BinaryHash = create_session_id(UniqueMap),
+    BinaryHash.
+
+%% Give me a process id, I'll create a random map for you.
 -spec create_map(pid()) -> #{string() => pid(), string() => float(),
                              string() => string()}.
 create_map(Pid) when is_pid(Pid) ->
