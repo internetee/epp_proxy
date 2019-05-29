@@ -2,7 +2,7 @@
 
 -export([create_map/1, create_session_id/1, frame_length/1,
          frame_length_to_receive/1, frame_length_to_send/1,
-         session_id/1]).
+         session_id/1, readable_ip/1]).
 
 -define(OFFSET, 4).
 
@@ -48,3 +48,13 @@ frame_length(Frame) when is_binary(Frame) ->
 frame_length(Frame) when is_list(Frame) ->
     Bin = unicode:characters_to_binary(Frame),
     byte_size(Bin).
+
+%% Pass a tuple of IP address, return a binary for sending over the wire.
+-spec readable_ip({integer(), integer(), integer(), integer()}) -> binary().
+readable_ip({FirstOctet, SecondOctet, ThirdOctet, FourthOctet}) ->
+    List = [integer_to_list(FirstOctet), ".",
+            integer_to_list(SecondOctet), ".",
+            integer_to_list(ThirdOctet), ".",
+            integer_to_list(FourthOctet)],
+    Binary = list_to_binary(List),
+    Binary.

@@ -9,9 +9,9 @@
 -export([init/1, handle_cast/2, handle_call/3, start_link/1]).
 -export([code_change/3]).
 
--export([request/5]).
+-export([request/6]).
 
--record(state,{socket, length, session_id, common_name, client_cert}).
+-record(state,{socket, session_id, common_name, client_cert, peer_ip}).
 
 init(Socket) ->
     logger:info("Created a worker process"),
@@ -22,18 +22,17 @@ start_link(Socket) ->
     gen_server:start_link(?MODULE, Socket, []).
 
 handle_cast(serve, State = #state{socket=Socket}) ->
+    %% If certificate is revoked, this will fail right away here.
+    %% mod_epp does exactly the same thing.
     {ok, SecureSocket} = ssl:handshake(Socket),
-    {ok, PeerCert} = ssl:peercert(SecureSocket),
-    {SSL_CLIENT_S_DN_CN, SSL_CLIENT_CERT} =
-        epp_certs:headers_from_cert(PeerCert),
-
-    {noreply, State#state{socket=SecureSocket, common_name=SSL_CLIENT_S_DN_CN,
-                          client_cert=SSL_CLIENT_CERT}};
+    NewState = state_from_socket(SecureSocket, State),
+    {noreply, NewState};
 handle_cast(greeting, State = #state{socket=Socket, common_name=SSL_CLIENT_S_DN_CN,
                                      client_cert=SSL_CLIENT_CERT,
-                                     session_id=SessionId}) ->
+                                     session_id=SessionId,
+                                     peer_ip=PeerIp}) ->
     Request = request("hello", SessionId, "", SSL_CLIENT_S_DN_CN,
-                      SSL_CLIENT_CERT),
+                      SSL_CLIENT_CERT, PeerIp),
     logger:info("Request: ~p~n", [Request]),
 
     {_Status, _StatusCode, _Headers, ClientRef} =
@@ -49,7 +48,8 @@ handle_cast(greeting, State = #state{socket=Socket, common_name=SSL_CLIENT_S_DN_
 handle_cast(process_command, State = #state{socket=Socket,
                                             common_name=SSL_CLIENT_S_DN_CN,
                                             client_cert=SSL_CLIENT_CERT,
-                                            session_id=SessionId}) ->
+                                            session_id=SessionId,
+                                            peer_ip=PeerIp}) ->
     Length = case read_length(Socket) of
         {ok, Data} ->
             Data;
@@ -69,7 +69,7 @@ handle_cast(process_command, State = #state{socket=Socket,
     Command = epp_xml:get_command(XMLRecord),
 
     Request = request(Command, SessionId, Frame, SSL_CLIENT_S_DN_CN,
-                      SSL_CLIENT_CERT),
+                      SSL_CLIENT_CERT, PeerIp),
     logger:info("Request: ~p~n", [Request]),
 
     {_Status, _StatusCode, _Headers, ClientRef} =
@@ -119,7 +119,7 @@ read_frame(Socket, FrameLength) ->
     end.
 
 %% Map request and return values
-request(Command, SessionId, RawFrame, CommonName, ClientCert) ->
+request(Command, SessionId, RawFrame, CommonName, ClientCert, PeerIp) ->
     URL = epp_router:route_request(Command),
     RequestMethod = epp_router:request_method(Command),
     Cookie = hackney_cookie:setcookie("session", SessionId, []),
@@ -131,7 +131,8 @@ request(Command, SessionId, RawFrame, CommonName, ClientCert) ->
         end,
     Headers = [{"SSL_CLIENT_CERT", ClientCert},
                {"SSL_CLIENT_S_DN_CN", CommonName},
-               {"User-Agent", <<"EPP proxy">>}],
+               {"User-Agent", <<"EPP proxy">>},
+               {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}],
     #epp_request{url=URL, method=RequestMethod, body=Body, cookies=[Cookie],
              headers=Headers}.
 
@@ -141,3 +142,14 @@ frame_to_socket(Message, Socket) ->
     ByteSize = << Length:32/big >>,
     write_line(Socket, ByteSize),
     write_line(Socket, Message).
+
+%% Extract state info from socket. Fail if you must.
+state_from_socket(Socket, State) ->
+    {ok, PeerCert} = ssl:peercert(Socket),
+    {ok,  {PeerIp, _PeerPort}} = ssl:peername(Socket),
+    {SSL_CLIENT_S_DN_CN, SSL_CLIENT_CERT} =
+        epp_certs:headers_from_cert(PeerCert),
+    NewState = State#state{socket=Socket, common_name=SSL_CLIENT_S_DN_CN,
+                           client_cert=SSL_CLIENT_CERT, peer_ip=PeerIp},
+    logger:info("Established connection with: [~p]~n", [NewState]),
+    NewState.

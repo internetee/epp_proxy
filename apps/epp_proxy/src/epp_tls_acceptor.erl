@@ -28,7 +28,6 @@
             {ok, CrlFile} -> CrlFile
             end).
 
-
 %% gen_server callbacks
 -export([init/1, handle_cast/2, handle_call/3, start_link/1]).
 
