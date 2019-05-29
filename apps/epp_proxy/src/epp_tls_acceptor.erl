@@ -9,19 +9,25 @@
 -define(CaCertFile,
         case application:get_env(epp_proxy, cacertfile_path) of
             undefined -> undefined;
-            {ok, Value} -> Value
+            {ok, CaCertFile} -> CaCertFile
             end).
 
 -define(CertFile,
         case application:get_env(epp_proxy, certfile_path) of
             undefined -> undefined;
-            {ok, Value} -> Value
+            {ok, CertFile} -> CertFile
             end).
 -define(KeyFile,
         case application:get_env(epp_proxy, keyfile_path) of
             undefined -> undefined;
-            {ok, Value} -> Value
+            {ok, KeyFile} -> KeyFile
             end).
+-define(CrlFile,
+        case application:get_env(epp_proxy, crlfile_path) of
+            undefined -> undefined;
+            {ok, CrlFile} -> CrlFile
+            end).
+
 
 %% gen_server callbacks
 -export([init/1, handle_cast/2, handle_call/3, start_link/1]).
@@ -40,7 +46,11 @@ init(Port) ->
                {depth, 1},
                {cacertfile, ?CaCertFile},
                {certfile, ?CertFile},
-               {keyfile, ?KeyFile}],
+               {keyfile, ?KeyFile},
+               {crl_check, peer},
+               {crl_cache, {ssl_crl_cache, {internal, [{http, 5000}]}}}],
+
+    ssl_crl_cache:insert({file, ?CrlFile}),
 
     {ok, ListenSocket} = ssl:listen(Port, Options),
     gen_server:cast(self(), accept),
