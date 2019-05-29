@@ -39,5 +39,5 @@ frame_length_to_send_test() ->
     ?assertEqual(4, epp_util:frame_length_to_send("")).
 
 readable_ip_test() ->
-    ?assertEqual(<<127,46,0,46,0,46,1>>, epp_util:readable_ip({127,0,0,1})),
+    ?assertEqual(<<"127.0.0.1">>, epp_util:readable_ip({127,0,0,1})),
     ?assertError(function_clause, epp_util:readable_ip({127,0,0,1,0})).

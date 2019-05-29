@@ -11,7 +11,6 @@ headers_from_cert(Der) ->
     OTPCertificate = der_certificate(Der),
     Subject = subject_from_otp_certificate(OTPCertificate),
     CommonName = common_name_from_subject(Subject),
-    logger:info("~p~n", [CommonName]),
     PEM = certificate_to_pem(Der),
     {CommonName, PEM}.
 

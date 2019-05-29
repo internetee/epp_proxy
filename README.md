@@ -12,7 +12,7 @@ Build
 TODO
 ----
 
-1. Add file logger (there's an erlang package for that).
+1. DONE -- Add syslog logger
 2. Add default error responses for errors while contacting registry and for invalid XML.
 3. This readme.
 3. Migration guide for mod epp.

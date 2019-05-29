@@ -12,7 +12,7 @@
 -record(state,{socket, length, session_id}).
 
 init(Socket) ->
-    logger:info("Created a worker process"),
+    lager:info("Created a worker process"),
     SessionId = epp_util:session_id(self()),
     {ok, #state{socket=Socket, session_id=SessionId}}.
 
@@ -23,7 +23,7 @@ handle_cast(serve, State = #state{socket=Socket}) ->
     {noreply, State#state{socket=Socket}};
 handle_cast(greeting, State = #state{socket=Socket, session_id=SessionId}) ->
     Request = request("hello", SessionId, ""),
-    logger:info("Request: ~p~n", [Request]),
+    lager:info("Request: ~p~n", [Request]),
 
     {_Status, _StatusCode, _Headers, ClientRef} =
         hackney:request(Request#epp_request.method, Request#epp_request.url,
@@ -56,7 +56,7 @@ handle_cast(process_command, State = #state{socket=Socket, session_id=SessionId}
     Command = epp_xml:get_command(XMLRecord),
 
     Request = request(Command, SessionId, Frame),
-    logger:info("Request: ~p~n", [Request]),
+    lager:info("Request: ~p~n", [Request]),
 
     {_Status, _StatusCode, _Headers, ClientRef} =
         hackney:request(Request#epp_request.method, Request#epp_request.url,
