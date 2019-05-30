@@ -40,7 +40,7 @@ on the client IP address.
 
 Supervision Tree
 -----
-The application leverages OTP to isolate EPP clients from one another, each connection is isolated from others. There are two processes that
+The application leverages OTP to isolate EPP clients from one another, each connection is owned by its own process. There are two processes that
 accept the connections and spin off workers, those are supervised in "one for one" strategy.
 
 Build
