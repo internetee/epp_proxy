@@ -9,8 +9,6 @@
 -export([init/1, handle_cast/2, handle_call/3, start_link/1]).
 -export([code_change/3]).
 
--export([request_from_map/1]).
-
 -record(valid_frame, {command,
                       cl_trid,
                       raw_frame}).
@@ -21,6 +19,11 @@
                 session_id,
                 headers }).
 
+-define(XMLErrorCode, <<"2001">>).
+-define(XMLErrorMessage, <<"Command syntax error.">>).
+
+%% Initialize process
+%% Assign an unique session id that will be passed on to http server as a cookie
 init(Socket) ->
     lager:info("Created a worker process: [~p]", [self()]),
     SessionId = epp_util:session_id(self()),
@@ -29,13 +32,24 @@ init(Socket) ->
 start_link(Socket) ->
     gen_server:start_link(?MODULE, Socket, []).
 
-
+%% First step after spinning off the process:
+%% Perform an TLS handshake and gather data that we use a headers for
+%% http request:
+%% Common name
+%% Client certificate
+%% Client IP address
+%% If certificate is revoked, this will fail right away here.
+%% mod_epp does exactly the same thing.
 handle_cast(serve, State = #state{socket=Socket}) ->
-    %% If certificate is revoked, this will fail right away here.
-    %% mod_epp does exactly the same thing.
     {ok, SecureSocket} = ssl:handshake(Socket),
     NewState = state_from_socket(SecureSocket, State),
     {noreply, NewState};
+
+%% Step two:
+%% Using the state of the connection, get the hello route from http server.
+%% Send the response from HTTP server back to EPP client.
+%% When this succeeds, send "process_command" to self and await further
+%% commands.
 handle_cast(greeting, State = #state{socket=Socket,
                                      session_id=SessionId,
                                      headers=Headers}) ->
@@ -52,8 +66,15 @@ handle_cast(greeting, State = #state{socket=Socket,
     gen_server:cast(self(), process_command),
     {noreply, State#state{socket=Socket, session_id=SessionId}};
 
-%% Main loop of processing commands. Ends the connection when command is logout.
+%% Step three to N:
+%% Await input from client. Parse it, and perform an appropriate http request.
+%% Commands go to commands, invalid XML goes to error.
+%% Send the response from HTTP server back to EPP client.
 %%
+%% When the command from client was logout, close the connection and quit the
+%% process.
+%%
+%% Otherwise send "process_command" again to self to repeat the process.
 handle_cast(process_command,
             State = #state{socket=Socket,session_id=SessionId,
                            headers=Headers}) ->
@@ -96,9 +117,6 @@ handle_call(_E, _From, State) -> {noreply, State}.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 %% Private functions
-write_line(Socket, Line) ->
-    ok = ssl:send(Socket, Line).
-
 read_length(Socket) ->
     case ssl:recv(Socket, 4) of
         {ok, Data} ->
@@ -106,7 +124,7 @@ read_length(Socket) ->
             LengthToReceive = epp_util:frame_length_to_receive(Length),
             {ok, LengthToReceive};
         {error, Reason} ->
-            io:format("Error: ~p~n", [Reason]),
+            lager:error("Error: ~p~n", [Reason]),
             {error, Reason}
     end.
 
@@ -115,71 +133,9 @@ read_frame(Socket, FrameLength) ->
         {ok, Data} ->
             {ok, Data};
         {error, Reason} ->
-            io:format("Error: ~p~n", [Reason]),
+            lager:error("Error: ~p~n", [Reason]),
             {error, Reason}
     end.
-
-%% Map request and return values.
-request_from_map(#{command := "error", session_id := SessionId,
-                   code := Code, message := Message, headers:=Headers,
-                   cl_trid := ClTRID}) ->
-    URL = epp_router:route_request("error"),
-    RequestMethod = epp_router:request_method("error"),
-    Cookie = hackney_cookie:setcookie("session", SessionId, []),
-    QueryParams = query_params(Code, Message, ClTRID),
-    Headers=Headers,
-    Request = #epp_error_request{url=URL,
-                           method=RequestMethod,
-                           query_params=QueryParams,
-                           cookies=[Cookie],
-                           headers=Headers},
-    lager:info("Error Request from map: [~p]~n", [Request]),
-    Request;
-request_from_map(#{command := Command, session_id := SessionId,
-          raw_frame := RawFrame, headers:=Headers, cl_trid := ClTRID}) ->
-    URL = epp_router:route_request(Command),
-    RequestMethod = epp_router:request_method(Command),
-    Cookie = hackney_cookie:setcookie("session", SessionId, []),
-    Body = request_body(Command, RawFrame, ClTRID),
-    Headers=Headers,
-    Request = #epp_request{url=URL,
-                           method=RequestMethod,
-                           body=Body,
-                           cookies=[Cookie],
-                           headers=Headers},
-    lager:info("Request from map: [~p]~n", [Request]),
-    Request;
-request_from_map(#{command := Command, session_id := SessionId,
-          raw_frame := RawFrame, common_name := CommonName,
-          client_cert := ClientCert, peer_ip := PeerIp, cl_trid := ClTRID}) ->
-    URL = epp_router:route_request(Command),
-    RequestMethod = epp_router:request_method(Command),
-    Cookie = hackney_cookie:setcookie("session", SessionId, []),
-    Body = request_body(Command, RawFrame, ClTRID),
-    Headers = [{"SSL_CLIENT_CERT", ClientCert},
-               {"SSL_CLIENT_S_DN_CN", CommonName},
-               {"User-Agent", <<"EPP proxy">>},
-               {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}],
-    Request = #epp_request{url=URL,
-                           method=RequestMethod,
-                           body=Body,
-                           cookies=[Cookie],
-                           headers=Headers},
-    lager:info("Request from map: [~p]~n", [Request]),
-    Request.
-
-%% Return form data or an empty list.
-request_body("hello", _, _) ->
-    "";
-request_body(_Command, RawFrame, nomatch) ->
-    {multipart, [{<<"raw_frame">>, RawFrame}]};
-request_body(_Command, RawFrame, ClTRID) ->
-    {multipart, [{<<"raw_frame">>, RawFrame}, {<<"clTRID">>, ClTRID}]}.
-
-query_params(Code, Message, nomatch) ->
-    [{<<"code">>, Code}, {<<"msg">>, Message}];
-query_params(Code, Message, ClTRID) ->
-    [{<<"code">>, Code}, {<<"msg">>, Message}, {<<"clTRID">>, ClTRID}].
 
 %% Wrap a message in EPP frame, and then send it to socket.
 frame_to_socket(Message, Socket) ->
@@ -187,6 +143,9 @@ frame_to_socket(Message, Socket) ->
     ByteSize = << Length:32/big >>,
     write_line(Socket, ByteSize),
     write_line(Socket, Message).
+
+write_line(Socket, Line) ->
+    ok = ssl:send(Socket, Line).
 
 %% First, listen for 4 bytes, then listen until the declared length.
 %% Return the frame binary at the very end.
@@ -220,14 +179,18 @@ state_from_socket(Socket, State) ->
     lager:info("Established connection with: [~p]~n", [NewState]),
     NewState.
 
-%% Get status, XML record, command and clTRID if defined
+%% Get status, XML record, command and clTRID if defined.
+%% Otherwise return an invalid frame with predefined error message and code.
 parse_frame(Frame) ->
     ClTRID = epp_xml:find_cltrid(Frame),
     case epp_xml:parse(Frame) of
         {ok, XMLRecord} ->
             Command = epp_xml:get_command(XMLRecord),
-            #valid_frame{command=Command, cl_trid=ClTRID, raw_frame=Frame};
+            #valid_frame{command=Command,
+                         cl_trid=ClTRID,
+                         raw_frame=Frame};
         {error, _} ->
-            ErrorMessage = <<"Command syntax error.">>,
-            #invalid_frame{code=2001, message=ErrorMessage, cl_trid=ClTRID}
+            #invalid_frame{code=?XMLErrorCode,
+                           message=?XMLErrorMessage,
+                           cl_trid=ClTRID}
         end.
