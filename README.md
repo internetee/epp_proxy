@@ -88,7 +88,7 @@ Checklist of steps to perform if you want to migrate from mod_epp, but still use
 2. Install this project to desired location.
 3. Ensure that the user who will run epp_proxy has access to all certificate files.
 4. Set up syslog in `config/sys.config`.
-5. If you do not feel comfortable using Erlang configuration file, you can use command line arguments and flags in format of `/epp_proxy/rel/bin/epp_proxy -epp_proxy tls_port 444`, where -epp_proxy is static name of application,
+5. If you do not feel comfortable using Erlang configuration file, you can use command line arguments and flags in format of `/epp_proxy/rel/bin/epp_proxy -epp_proxy tls_port 444`, where `-epp_proxy` is name of application,
    followed by configuration parameter name and value.
 
 TODO
