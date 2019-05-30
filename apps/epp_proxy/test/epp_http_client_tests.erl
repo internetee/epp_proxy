@@ -21,7 +21,7 @@ error_request_builder_test() ->
                    message => <<"Expected better XML">>,
                    headers => [{"User-Agent", <<"EPP proxy">>}]},
     Request = epp_http_client:request_builder(RequestMap),
-    ExpectedTuple = {epp_error_request,get,"https://registry.test/epp/error/",
+    ExpectedTuple = {epp_error_request,get,"https://registry.test/epp/error",
                      [{<<"code">>,<<"2001">>},
                       {<<"msg">>,<<"Expected better XML">>},
                       {<<"clTRID">>,"EE-123456789"}],

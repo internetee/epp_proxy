@@ -64,5 +64,5 @@ transfer_url_test() ->
     ?assertEqual("https://registry.test/epp/command/transfer", epp_router:route_request(<<"transfer">>)).
 
 error_url_test() ->
-    ?assertEqual("https://registry.test/epp/error/", epp_router:route_request("error")),
-    ?assertEqual("https://registry.test/epp/error/", epp_router:route_request(<<"error">>)).
+    ?assertEqual("https://registry.test/epp/error", epp_router:route_request("error")),
+    ?assertEqual("https://registry.test/epp/error", epp_router:route_request(<<"error">>)).

@@ -5,25 +5,6 @@
 -define(validCommands, ["hello", "login", "logout", "check", "info", "poll",
                         "create", "delete", "renew", "update", "transfer"]).
 
-%% By default, return test values. This might cause issues in production.
--define(baseSessionUrl,
-        case application:get_env(epp_proxy, epp_session_url) of
-            undefined -> "https://registry.test/epp/session/";
-            {ok, Value} -> Value
-            end).
-
--define(baseCommandUrl,
-        case application:get_env(epp_proxy, epp_command_url) of
-            undefined -> "https://registry.test/epp/command/";
-            {ok, Value} -> Value
-            end).
-
--define(baseErrorUrl,
-        case application:get_env(epp_proxy, epp_error_url) of
-            undefined -> "https://registry.test/epp/error/";
-            {ok, Value} -> Value
-            end).
-
 %% Save yourself some checking beforehand.
 is_valid_epp_command(Command) ->
     lists:member(Command, ?validCommands).
@@ -50,31 +31,56 @@ route_request(Command) when is_list(Command) -> url_map(Command).
 url_map(Command) when is_list(Command) ->
     case Command of
         %% Session commands
-        "hello"   -> string:concat(base_session_url(), Command);
-        "login"   -> string:concat(base_session_url(), Command);
-        "logout"  -> string:concat(base_session_url(), Command);
+        "hello"   -> unicode:characters_to_list([base_session_url(), Command]);
+        "login"   -> unicode:characters_to_list([base_session_url(), Command]);
+        "logout"  -> unicode:characters_to_list([base_session_url(), Command]);
         %% Poll commands
-        "check"   -> string:concat(base_command_url(), Command);
-        "info"    -> string:concat(base_command_url(), Command);
-        "poll"    -> string:concat(base_command_url(), Command);
+        "check"   -> unicode:characters_to_list([base_command_url(), Command]);
+        "info"    -> unicode:characters_to_list([base_command_url(), Command]);
+        "poll"    -> unicode:characters_to_list([base_command_url(), Command]);
         %% Transform commands
-        "create"  -> string:concat(base_command_url(), Command);
-        "delete"  -> string:concat(base_command_url(), Command);
-        "renew"   -> string:concat(base_command_url(), Command);
-        "update"  -> string:concat(base_command_url(), Command);
+        "create"  -> unicode:characters_to_list([base_command_url(), Command]);
+        "delete"  -> unicode:characters_to_list([base_command_url(), Command]);
+        "renew"   -> unicode:characters_to_list([base_command_url(), Command]);
+        "update"  -> unicode:characters_to_list([base_command_url(), Command]);
         % Transfer is both poll and query
-        "transfer" -> string:concat(base_command_url(), Command);
+        "transfer" -> unicode:characters_to_list([base_command_url(), Command]);
         % Error route
         "error" -> base_error_url()
         % Anything else should fail.
      end.
 
-%% Just return the macros as defined
+%% This allows the person who configures proxy to not care about trailing
+%% slashes in HTTP.
+%% 47 is the equivalent for "/"
+appendable_route(Route) ->
+    case lists:last(Route) of
+        47 -> Route;
+        _ -> unicode:characters_to_list([Route, "/"])
+    end.
+
+parametrizable_route(Route) ->
+    case lists:last(Route) of
+        47 -> lists:droplast(Route);
+        _  -> Route
+        end.
+
+%% Every time a request is made, this will go to ETS to check what's the route,
+%% But that is fast enough to not be noticed by anyone.
 base_session_url() ->
-    ?baseSessionUrl.
+    case application:get_env(epp_proxy, epp_session_url) of
+        undefined -> "https://registry.test/epp/session/";
+        {ok, Value} -> appendable_route(Value)
+    end.
 
 base_command_url() ->
-    ?baseCommandUrl.
+    case application:get_env(epp_proxy, epp_command_url) of
+        undefined -> "https://registry.test/epp/command/";
+        {ok, Value} -> appendable_route(Value)
+    end.
 
 base_error_url() ->
-    ?baseErrorUrl.
+    case application:get_env(epp_proxy, epp_error_url) of
+        undefined -> "https://registry.test/epp/error";
+        {ok, Value} -> parametrizable_route(Value)
+    end.
