@@ -1,3 +1,8 @@
+%% This is a test module for local development only. TCP without TLS is
+%% against the EPP specification, it should not be used in production.
+%%
+%% This gen_server is only deployed if dev_mode property on epp_proxy app is set
+%% to true.
 -module(epp_tcp_acceptor).
 
 -behaviour(gen_server).
@@ -29,6 +34,7 @@ handle_cast(accept,
     {ok, AcceptSocket} = gen_tcp:accept(ListenSocket),
     {ok, NewOwner} = create_worker(AcceptSocket),
     ok = gen_tcp:controlling_process(AcceptSocket, NewOwner),
+    gen_server:cast(NewOwner, serve),
     gen_server:cast(NewOwner, greeting),
     gen_server:cast(self(), accept),
     {noreply, State#state{socket=ListenSocket, port=Port, options=Options}}.
