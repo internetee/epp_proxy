@@ -12,7 +12,17 @@
         url,          % "https://example.com/some-url"
         query_params, % {[{<<"msg">>, <<"Some">>}, {<<"code">>, <<"2001">>}]}
         cookies,      % [<<"session=SomeSession; Version=1">>]
-        headers        % [{"User-Agent", <<"EPP proxy">>}, {"Other", <<"Header">>}]
+        headers       % [{"User-Agent", <<"EPP proxy">>}, {"Other", <<"Header">>}]
+       }).
+
+%% Unified version of the two records above. Depending on the method,
+%% it either encodes parameters into multipart form or query parameters and url.
+-record(epp_unified_request,
+       {method,       % get
+        url,          % "https://example.com/some-url"
+        params,       % {[{<<"msg">>, <<"Some">>}, {<<"code">>, <<"2001">>}]}
+        cookies,      % [<<"session=SomeSession; Version=1">>]
+        headers       % [{"User-Agent", <<"EPP proxy">>}, {"Other", <<"Header">>}]
        }).
 
 -type epp_request() :: #epp_request{}.

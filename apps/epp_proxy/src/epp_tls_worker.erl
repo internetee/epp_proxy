@@ -22,7 +22,7 @@
                 headers }).
 
 init(Socket) ->
-    lager:info("Created a worker process"),
+    lager:info("Created a worker process: [~p]", [self()]),
     SessionId = epp_util:session_id(self()),
     {ok, #state{socket=Socket, session_id=SessionId}}.
 
@@ -40,17 +40,20 @@ handle_cast(greeting, State = #state{socket=Socket,
                                      session_id=SessionId,
                                      headers=Headers}) ->
 
-    Request = request_from_map(#{command => "hello",
-                                 session_id => SessionId,
-                                 raw_frame => "",
-                                 headers => Headers,
-                                 cl_trid => nomatch}),
+    Request = epp_http_client:request_builder(#{command => "hello",
+                                                session_id => SessionId,
+                                                raw_frame => "",
+                                                headers => Headers,
+                                                cl_trid => nomatch}),
 
     {_Status, Body} = epp_http_client:request(Request),
 
     frame_to_socket(Body, Socket),
     gen_server:cast(self(), process_command),
     {noreply, State#state{socket=Socket, session_id=SessionId}};
+
+%% Main loop of processing commands. Ends the connection when command is logout.
+%%
 handle_cast(process_command,
             State = #state{socket=Socket,session_id=SessionId,
                            headers=Headers}) ->
@@ -58,21 +61,21 @@ handle_cast(process_command,
 
     case parse_frame(RawFrame) of
         #valid_frame{command=Command, cl_trid=ClTRID} ->
-            Request = request_from_map(#{command => Command,
-                                         session_id => SessionId,
-                                         raw_frame => RawFrame,
-                                         headers => Headers,
-                                         cl_trid => ClTRID}),
+            Request = epp_http_client:request_builder(#{command => Command,
+                                                        session_id => SessionId,
+                                                        raw_frame => RawFrame,
+                                                        headers => Headers,
+                                                        cl_trid => ClTRID}),
 
             {_Status, Body} = epp_http_client:request(Request);
         #invalid_frame{message=Message, code=Code, cl_trid=ClTRID} ->
             Command = "error",
-            Request = request_from_map(#{command => Command,
-                                         session_id => SessionId,
-                                         headers => Headers,
-                                         code => Code,
-                                         message => Message,
-                                         cl_trid => ClTRID}),
+            Request = epp_http_client:request_builder(#{command => Command,
+                                                        session_id => SessionId,
+                                                        headers => Headers,
+                                                        code => Code,
+                                                        message => Message,
+                                                        cl_trid => ClTRID}),
             {_Status, Body} = epp_http_client:error_request(Request)
         end,
 
@@ -197,7 +200,6 @@ frame_from_socket(Socket, State) ->
 
     Frame = case read_frame(Socket, Length) of
         {ok, FrameData} ->
-            io:format("~p~n", [FrameData]),
             FrameData;
         {error, _FrameDetails} ->
             {stop, normal, State}
