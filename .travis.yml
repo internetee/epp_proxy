@@ -5,4 +5,4 @@ otp_release:
 
 script:
   - "rebar3 eunit"
-  - "rebar3 ct --sys_config config/test.config"
+  - "rebar3 ct --sys_config config/test.config --readable=false"
