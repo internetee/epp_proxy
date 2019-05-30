@@ -18,6 +18,12 @@
             {ok, Value} -> Value
             end).
 
+-define(baseErrorUrl,
+        case application:get_env(epp_proxy, epp_error_url) of
+            undefined -> "https://registry.test/epp/error/";
+            {ok, Value} -> Value
+            end).
+
 %% Save yourself some checking beforehand.
 is_valid_epp_command(Command) ->
     lists:member(Command, ?validCommands).
@@ -26,6 +32,10 @@ is_valid_epp_command(Command) ->
 request_method("hello") ->
     get;
 request_method(<<"hello">>) ->
+    get;
+request_method("error") ->
+    get;
+request_method(<<"error">>) ->
     get;
 request_method(_) ->
     post.
@@ -53,7 +63,9 @@ url_map(Command) when is_list(Command) ->
         "renew"   -> string:concat(base_command_url(), Command);
         "update"  -> string:concat(base_command_url(), Command);
         % Transfer is both poll and query
-        "transfer" -> string:concat(base_command_url(), Command)
+        "transfer" -> string:concat(base_command_url(), Command);
+        % Error route
+        "error" -> base_error_url()
         % Anything else should fail.
      end.
 
@@ -63,3 +75,6 @@ base_session_url() ->
 
 base_command_url() ->
     ?baseCommandUrl.
+
+base_error_url() ->
+    ?baseErrorUrl.

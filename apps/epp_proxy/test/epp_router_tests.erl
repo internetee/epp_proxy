@@ -13,6 +13,8 @@ is_valid_epp_command_test() ->
 request_method_test() ->
     ?assertEqual(get, epp_router:request_method("hello")),
     ?assertEqual(get, epp_router:request_method(<<"hello">>)),
+    ?assertEqual(get, epp_router:request_method("error")),
+    ?assertEqual(get, epp_router:request_method(<<"error">>)),
     ?assertEqual(post, epp_router:request_method("create")),
     ?assertEqual(post, epp_router:request_method(123)).
 
@@ -60,3 +62,7 @@ update_url_test() ->
 transfer_url_test() ->
     ?assertEqual("https://registry.test/epp/command/transfer", epp_router:route_request("transfer")),
     ?assertEqual("https://registry.test/epp/command/transfer", epp_router:route_request(<<"transfer">>)).
+
+error_url_test() ->
+    ?assertEqual("https://registry.test/epp/error/", epp_router:route_request("error")),
+    ?assertEqual("https://registry.test/epp/error/", epp_router:route_request(<<"error">>)).
