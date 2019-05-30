@@ -6,28 +6,6 @@
 -define(POOL_SUPERVISOR, epp_pool_supervisor).
 -define(WORKER, epp_tls_worker).
 
--define(CaCertFile,
-        case application:get_env(epp_proxy, cacertfile_path) of
-            undefined -> undefined;
-            {ok, CaCertFile} -> CaCertFile
-            end).
-
--define(CertFile,
-        case application:get_env(epp_proxy, certfile_path) of
-            undefined -> undefined;
-            {ok, CertFile} -> CertFile
-            end).
--define(KeyFile,
-        case application:get_env(epp_proxy, keyfile_path) of
-            undefined -> undefined;
-            {ok, KeyFile} -> KeyFile
-            end).
--define(CrlFile,
-        case application:get_env(epp_proxy, crlfile_path) of
-            undefined -> undefined;
-            {ok, CrlFile} -> CrlFile
-            end).
-
 %% gen_server callbacks
 -export([init/1, handle_cast/2, handle_call/3, start_link/1]).
 
@@ -43,19 +21,26 @@ init(Port) ->
                {reuseaddr, true},
                {verify, verify_peer},
                {depth, 1},
-               {cacertfile, ?CaCertFile},
-               {certfile, ?CertFile},
-               {keyfile, ?KeyFile},
+               {cacertfile, ca_cert_file()},
+               {certfile, cert_file()},
+               {keyfile, key_file()},
                {crl_check, peer},
                {crl_cache, {ssl_crl_cache, {internal, [{http, 5000}]}}}],
 
-    ssl_crl_cache:insert({file, ?CrlFile}),
+    ssl_crl_cache:insert({file, crl_file()}),
 
     {ok, ListenSocket} = ssl:listen(Port, Options),
     gen_server:cast(self(), accept),
 
     {ok, #state{socket=ListenSocket, port=Port, options=Options}}.
 
+
+%% Acceptor has only one state that goes in a loop:
+%% 1. Listen for a connection from anyone.
+%% 2. Ask supervisor to return a worker.
+%% 3. Pass the connection to the worker and make it a controlling process for
+%%    the socket.
+%% 4. Go back to listening.
 handle_cast(accept, State = #state{socket=ListenSocket, port=Port, options=Options}) ->
     {ok, AcceptSocket} = ssl:transport_accept(ListenSocket),
     {ok, NewOwner} = create_worker(AcceptSocket),
@@ -67,6 +52,8 @@ handle_cast(accept, State = #state{socket=ListenSocket, port=Port, options=Optio
 
 handle_call(_E, _From, State) -> {noreply, State}.
 
+%% Create a worker process. These are short lived and should not be restarted,
+%% but for the purpose of order we should put them in a supervision tree.
 create_worker(Socket) ->
     ChildSpec = #{id => rand:uniform(),
                    type => worker,
@@ -74,3 +61,29 @@ create_worker(Socket) ->
                    restart => temporary,
                    start => {?WORKER, start_link, [Socket]}},
     supervisor:start_child(?POOL_SUPERVISOR, ChildSpec).
+
+%% Private functions for returning paths to files. It costs almost nothing
+%% to query them from ETS.
+ca_cert_file() ->
+    case application:get_env(epp_proxy, cacertfile_path) of
+        undefined -> undefined;
+        {ok, CaCertFile} -> CaCertFile
+    end.
+
+cert_file() ->
+    case application:get_env(epp_proxy, certfile_path) of
+        undefined -> undefined;
+        {ok, CertFile} -> CertFile
+    end.
+
+key_file() ->
+    case application:get_env(epp_proxy, keyfile_path) of
+        undefined -> undefined;
+        {ok, KeyFile} -> KeyFile
+    end.
+
+crl_file() ->
+    case application:get_env(epp_proxy, crlfile_path) of
+        undefined -> undefined;
+        {ok, CrlFile} -> CrlFile
+    end.
