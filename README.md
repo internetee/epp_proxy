@@ -67,7 +67,7 @@ of Erlang property list.
 
 | Variable name        | Expected values                    | Apache equivalent     | Definition
 -----------------------|------------------------------------|-----------------------|--------------------------------------------
-| `dev_mode`           | `true | false`                     | None                  | Enables TCP access without TLS.
+| `dev_mode`           | `true`, `false`                    | None                  | Enables TCP access without TLS.
 | `tls_port`           | `700`                              | Listen                | At which port should we open a TLS socket. Default is 700.
 | `tcp_port`           | `70000`                            | Listen                | At which port should we open a TCP socket. Only in `dev_mode`.
 | `epp_session_url`    | `https://example.com/epp/session`  | EppSessionRoot        | HTTP address of the session endpoints including schema and port.
