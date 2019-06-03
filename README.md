@@ -55,6 +55,7 @@ with one of the following commands:
 ```bash
 $ rebar3 release # Creates a release locally.
 $ rebar3 tar # Creates an archive that can be shipped to another machine
+$ rebar3 as prod release tar # Combines the steps above into single one, uses production profile.
 ```
 
 Configuration

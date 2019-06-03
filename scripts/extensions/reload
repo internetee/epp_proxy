@@ -8,10 +8,10 @@ case $1 in
         ;;
 esac
 
-# get the status tuple from gameserver
+# Kill TLS acceptor, it should return OK
 Status=$(relx_nodetool eval "exit(whereis(epp_tls_acceptor), normal).")
 
-# now print it out
-code="Json = io:format(\"~p~n\", [$Status]),
+# now print the status back
+code="io:format(\"~p~n\", [$Status]),
       halt()."
 echo $(erl -boot no_dot_erlang -sasl errlog_type error -noshell -eval "$code")
