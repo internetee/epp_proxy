@@ -95,8 +95,4 @@ Checklist of steps to perform if you want to migrate from mod_epp, but still use
 TODO
 ----
 
-1. DONE -- Add syslog logger
-2. DONE -- Add default error responses for errors while contacting registry and for invalid XML.
-3. DONE -- This readme.
-4. DONE -- Migration guide for mod epp.
-5. Ensure CRL gets updated periodically without a need for restart of the service
+1. Ensure CRL gets updated periodically without a need for restart of the service
