@@ -1,0 +1,17 @@
+#!/bin/bash
+
+case $1 in
+    help)
+        echo "bin/epp_proxy reload"
+        ;;
+    *)
+        ;;
+esac
+
+# get the status tuple from gameserver
+Status=$(relx_nodetool eval "exit(whereis(epp_tls_acceptor), normal).")
+
+# now print it out
+code="Json = io:format(\"~p~n\", [$Status]),
+      halt()."
+echo $(erl -boot no_dot_erlang -sasl errlog_type error -noshell -eval "$code")

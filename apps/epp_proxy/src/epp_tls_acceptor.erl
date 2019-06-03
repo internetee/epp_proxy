@@ -9,6 +9,8 @@
 %% gen_server callbacks
 -export([init/1, handle_cast/2, handle_call/3, start_link/1]).
 
+-export([crl_file/0]).
+
 -record(state, {socket, port, options}).
 
 start_link(Port) ->
