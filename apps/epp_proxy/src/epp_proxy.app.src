@@ -8,6 +8,7 @@
     stdlib,
     ssl,
     lager,
+    syslog,
     lager_syslog]},
   {env,[]},
   {modules, []},
