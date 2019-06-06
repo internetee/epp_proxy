@@ -173,6 +173,8 @@ state_from_socket(Socket, State) ->
         epp_certs:headers_from_cert(PeerCert),
     Headers = [{"SSL_CLIENT_CERT", SSL_CLIENT_CERT},
                {"SSL_CLIENT_S_DN_CN", SSL_CLIENT_S_DN_CN},
+               {"SSL-CLIENT-CERT", SSL_CLIENT_CERT},
+               {"SSL-CLIENT-S-DN-CN", SSL_CLIENT_S_DN_CN},
                {"User-Agent", <<"EPP proxy">>},
                {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}],
     NewState = State#state{socket=Socket, headers=Headers},
