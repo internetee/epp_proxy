@@ -124,7 +124,6 @@ read_length(Socket) ->
             LengthToReceive = epp_util:frame_length_to_receive(Length),
             {ok, LengthToReceive};
         {error, Reason} ->
-            lager:error("Error: ~p~n", [Reason]),
             {error, Reason}
     end.
 
@@ -133,7 +132,6 @@ read_frame(Socket, FrameLength) ->
         {ok, Data} ->
             {ok, Data};
         {error, Reason} ->
-            lager:error("Error: ~p~n", [Reason]),
             {error, Reason}
     end.
 
@@ -149,21 +147,26 @@ write_line(Socket, Line) ->
 
 %% First, listen for 4 bytes, then listen until the declared length.
 %% Return the frame binary at the very end.
+%% If the client closes connection abruptly, then kill the process
 frame_from_socket(Socket, State) ->
     Length = case read_length(Socket) of
         {ok, Data} ->
             Data;
-        {error, _Details} ->
-            {stop, normal, State}
+        {error, closed} ->
+            log_and_exit(State)
         end,
 
     Frame = case read_frame(Socket, Length) of
         {ok, FrameData} ->
             FrameData;
-        {error, _FrameDetails} ->
-            {stop, normal, State}
-    end,
+        {error, closed} ->
+            log_and_exit(State)
+        end,
     Frame.
+
+log_and_exit(State) ->
+    lager:info("Client closed connection: [~p]~n", [State]),
+    exit(normal).
 
 %% Extract state info from socket. Fail if you must.
 state_from_socket(Socket, State) ->
@@ -171,9 +174,7 @@ state_from_socket(Socket, State) ->
     {ok,  {PeerIp, _PeerPort}} = ssl:peername(Socket),
     {SSL_CLIENT_S_DN_CN, SSL_CLIENT_CERT} =
         epp_certs:headers_from_cert(PeerCert),
-    Headers = [{"SSL_CLIENT_CERT", SSL_CLIENT_CERT},
-               {"SSL_CLIENT_S_DN_CN", SSL_CLIENT_S_DN_CN},
-               {"SSL-CLIENT-CERT", SSL_CLIENT_CERT},
+    Headers = [{"SSL-CLIENT-CERT", SSL_CLIENT_CERT},
                {"SSL-CLIENT-S-DN-CN", SSL_CLIENT_S_DN_CN},
                {"User-Agent", <<"EPP proxy">>},
                {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}],
