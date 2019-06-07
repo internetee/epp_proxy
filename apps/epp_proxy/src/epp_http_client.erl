@@ -9,17 +9,23 @@
 %% Callback API
 request(#epp_request{} = Request) ->
     HackneyArgs = handle_args(Request),
-    {Status, _StatusCode, _Headers, ClientRef} =
-        apply(hackney, request, HackneyArgs),
-    {ok, Body} = hackney:body(ClientRef),
-    {Status, Body}.
+    case apply(hackney, request, HackneyArgs) of
+        {error, Error} ->
+            log_and_return_canned(Error, Request);
+        {Status, _StatusCode, _Headers, ClientRef} ->
+            {ok, Body} = hackney:body(ClientRef),
+            {Status, Body}
+        end.
 
 error_request(#epp_error_request{} = Request) ->
     HackneyArgs = handle_error_args(Request),
-    {Status, _StatusCode, _Headers, ClientRef} =
-        apply(hackney, request, HackneyArgs),
-    {ok, Body} = hackney:body(ClientRef),
-    {Status, Body}.
+    case apply(hackney, request, HackneyArgs) of
+        {error, Error} ->
+            log_and_return_canned(Error, Request);
+        {Status, _StatusCode, _Headers, ClientRef} ->
+            {ok, Body} = hackney:body(ClientRef),
+            {Status, Body}
+        end.
 
 request_builder(Map) ->
     request_from_map(Map).
@@ -102,3 +108,22 @@ query_params(Code, Message, nomatch) ->
     [{<<"code">>, Code}, {<<"msg">>, Message}];
 query_params(Code, Message, ClTRID) ->
     [{<<"code">>, Code}, {<<"msg">>, Message}, {<<"clTRID">>, ClTRID}].
+
+%% Log critical information about a request that failed, and then
+%% return a canned response with internal error status.
+log_and_return_canned(Error, Request) ->
+    lager:alert("Registry cannot be reached!"),
+    lager:alert("Error contacting registry: [~p, ~p]~n", [Error, Request]),
+    {2400, canned_response()}.
+
+%% In case registry is not accessible, return this response.
+%% In the future, this should be configurable.
+canned_response() ->
+    <<"<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<epp xmlns=\"https://epp.tld.ee/schema/epp-ee-1.0.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"lib/schemas/epp-ee-1.0.xsd\">
+  <response>
+    <result code=\"2400\">
+      <msg lang=\"en\">Internal server error.</msg>
+    </result>
+  </response>
+</epp>">>.
