@@ -2,14 +2,6 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-is_valid_epp_command_test() ->
-    Commands = ["hello", "login", "logout", "check", "info", "poll",
-               "create", "delete", "renew", "update", "transfer"],
-    lists:foreach(fun (N) ->
-                          ?assert(epp_router:is_valid_epp_command(N))
-                  end,
-                  Commands).
-
 request_method_test() ->
     ?assertEqual(get, epp_router:request_method("hello")),
     ?assertEqual(get, epp_router:request_method(<<"hello">>)),

@@ -1,13 +1,12 @@
 -module(epp_router).
 
--export([route_request/1, is_valid_epp_command/1, request_method/1]).
+-export([route_request/1, request_method/1]).
 
 -define(validCommands, ["hello", "login", "logout", "check", "info", "poll",
                         "create", "delete", "renew", "update", "transfer"]).
 
-%% Save yourself some checking beforehand.
-is_valid_epp_command(Command) ->
-    lists:member(Command, ?validCommands).
+%% 47 is the character code
+-define(forwardSlash, 47).
 
 %% request method: GET for greeting, POST for everything else.
 request_method("hello") ->
@@ -52,16 +51,17 @@ url_map(Command) when is_list(Command) ->
 
 %% This allows the person who configures proxy to not care about trailing
 %% slashes in HTTP.
-%% 47 is the equivalent for "/"
 appendable_route(Route) ->
     case lists:last(Route) of
-        47 -> Route;
+        ?forwardSlash -> Route;
         _ -> unicode:characters_to_list([Route, "/"])
     end.
 
+%% This allows the person who configures proxy to not care about trailing
+%% slashes in HTTP.
 parametrizable_route(Route) ->
     case lists:last(Route) of
-        47 -> lists:droplast(Route);
+        ?forwardSlash -> lists:droplast(Route);
         _  -> Route
         end.
 
