@@ -12,5 +12,6 @@ start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 init([]) ->
-    SupFlags = #{strategy => one_for_one, intensity => 3, period => 60},
+    SupFlags = #{strategy => one_for_one, intensity => 3,
+                 period => 60},
     {ok, {SupFlags, []}}.

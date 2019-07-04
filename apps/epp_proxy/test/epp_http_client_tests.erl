@@ -9,9 +9,9 @@ hello_request_builder_test() ->
                    headers => [{"User-Agent", <<"EPP proxy">>}]},
     Request = epp_http_client:request_builder(RequestMap),
     ExpectedTuple = {epp_request,get,"https://registry.test/epp/session/hello",
-                              [],
-                              [<<"session=Random; Version=1">>],
-                              [{"User-Agent",<<"EPP proxy">>}]},
+                     [],
+                     [<<"session=Random; Version=1">>],
+                     [{"User-Agent",<<"EPP proxy">>}]},
     ?assert(is_record(Request, epp_request)),
     ?assertEqual(ExpectedTuple, Request).
 
@@ -38,8 +38,8 @@ command_request_builder_test() ->
     ExpectedTuple = {epp_request,post,
                      "https://registry.test/epp/command/create",
                      {multipart,
-                         [{<<"raw_frame">>,"Some XML here"},
-                          {<<"clTRID">>,"EE-123456789"}]},
+                      [{<<"raw_frame">>,"Some XML here"},
+                       {<<"clTRID">>,"EE-123456789"}]},
                      [<<"session=Random; Version=1">>],
                      [{"User-Agent",<<"EPP proxy">>}]},
     ?assert(is_record(Request, epp_request)),

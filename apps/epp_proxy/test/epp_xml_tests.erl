@@ -7,25 +7,25 @@
 -define(sampleCommandList,
         "<epp>
            <command>
-             <login>
-               <clID>test</clID>
-               <pw>test</pw>
-             </login>
-             <clTRID>sample1trid</clTRID>
-           </command>
-         </epp>").
+            <login>
+            <clID>test</clID>
+            <pw>test</pw>
+            </login>
+            <clTRID>sample1trid</clTRID>
+            </command>
+            </epp>").
 
 -define(validXMLNotEPPList,
         "<user>
            <name>test</name>
-           <email>test@test.com</email>
-         </user>").
+            <email>test@test.com</email>
+            </user>").
 
 %% parse
 parse_not_a_list_or_binary_test() ->
-    Input = 1234,
-    ExpectedOutput = {error, {fatal, {expected_binary_or_list}}},
-    ?assertEqual(ExpectedOutput, epp_xml:parse(Input)).
+               Input = 1234,
+               ExpectedOutput = {error, {fatal, {expected_binary_or_list}}},
+               ?assertEqual(ExpectedOutput, epp_xml:parse(Input)).
 
 parse_sample_valid_xml_list_test() ->
     Input = ?sampleCommandList,

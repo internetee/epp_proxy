@@ -9,6 +9,14 @@ emulate it's behaviour to the biggest possible extent.
 Aside from the standard library of Erlang/OTP, it uses hackney for making HTTP requests
 and lager for logging.
 
+Code style
+----
+We enforce the style from Erlang's own configuration.
+You can use the rebar3_fmt plugin to do it for you:
+
+    $ rebar3 fmt
+
+
 Design
 ----
 
