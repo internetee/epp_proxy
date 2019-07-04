@@ -49,12 +49,12 @@ handle_args(#epp_request{method=post,
     [post, URL, Headers, Payload, [{cookie, Cookies}, insecure]].
 
 %% Map request and return values.
-request_from_map(#{command := "error",
+request_from_map(#{command := ?errorCommand,
                    session_id := SessionId, code := Code,
                    message := Message, headers := Headers,
                    cl_trid := ClTRID}) ->
-    URL = epp_router:route_request("error"),
-    RequestMethod = epp_router:request_method("error"),
+    URL = epp_router:route_request(?errorCommand),
+    RequestMethod = epp_router:request_method(?errorCommand),
     Cookie = hackney_cookie:setcookie("session", SessionId,
                                       []),
     QueryParams = query_params(Code, Message, ClTRID),
@@ -62,7 +62,7 @@ request_from_map(#{command := "error",
     Request = #epp_request{url = URL,
                            method = RequestMethod,
                            payload = QueryParams, cookies = [Cookie],
-                           headers = Headers, epp_verb= "error"},
+                           headers = Headers, epp_verb= ?errorCommand},
     lager:info("Error Request from map: [~p]~n", [Request]),
     Request;
 request_from_map(#{command := Command,
@@ -101,7 +101,7 @@ request_from_map(#{command := Command,
     Request.
 
 %% Return form data or an empty list.
-request_body("hello", _, _) -> "";
+request_body(?helloCommand, _, _) -> "";
 request_body(_Command, RawFrame, nomatch) ->
     {multipart, [{<<"raw_frame">>, RawFrame}]};
 request_body(_Command, RawFrame, ClTRID) ->
