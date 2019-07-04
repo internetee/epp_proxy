@@ -11,7 +11,7 @@ hello_request_builder_test() ->
     ExpectedTuple = {epp_request,get,"https://registry.test/epp/session/hello",
                      [],
                      [<<"session=Random; Version=1">>],
-                     [{"User-Agent",<<"EPP proxy">>}]},
+                     [{"User-Agent",<<"EPP proxy">>}], "hello"},
     ?assert(is_record(Request, epp_request)),
     ?assertEqual(ExpectedTuple, Request).
 
@@ -21,13 +21,13 @@ error_request_builder_test() ->
                    message => <<"Expected better XML">>,
                    headers => [{"User-Agent", <<"EPP proxy">>}]},
     Request = epp_http_client:request_builder(RequestMap),
-    ExpectedTuple = {epp_error_request,get,"https://registry.test/epp/error",
+    ExpectedTuple = {epp_request,get,"https://registry.test/epp/error",
                      [{<<"code">>,<<"2001">>},
                       {<<"msg">>,<<"Expected better XML">>},
                       {<<"clTRID">>,"EE-123456789"}],
                      [<<"session=Random; Version=1">>],
-                     [{"User-Agent",<<"EPP proxy">>}]},
-    ?assert(is_record(Request, epp_error_request)),
+                     [{"User-Agent",<<"EPP proxy">>}], "error"},
+    ?assert(is_record(Request, epp_request)),
     ?assertEqual(ExpectedTuple, Request).
 
 command_request_builder_test() ->
@@ -41,6 +41,6 @@ command_request_builder_test() ->
                       [{<<"raw_frame">>,"Some XML here"},
                        {<<"clTRID">>,"EE-123456789"}]},
                      [<<"session=Random; Version=1">>],
-                     [{"User-Agent",<<"EPP proxy">>}]},
+                     [{"User-Agent",<<"EPP proxy">>}], "create"},
     ?assert(is_record(Request, epp_request)),
     ?assertEqual(ExpectedTuple, Request).
