@@ -3,9 +3,6 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("public_key/include/public_key.hrl").
 
--define(exampleCertFile, lists:flatten([code:lib_dir(epp_proxy, priv),
-                                        "epp-proxy-test.crt.pem"])).
-
 der_certificate_test() ->
     PemEntries = public_key:pem_decode(certificate_pem()),
     {value, CertEntry} = lists:keysearch('Certificate', 1, PemEntries),
@@ -31,7 +28,6 @@ test_certificate() ->
     Decoded = public_key:pkix_decode_cert(DerCert, otp),
     Decoded.
 
-%% Contents from fixtures/epp-proxy-test.crt.pem file
 certificate_pem() ->
     <<"-----BEGIN CERTIFICATE-----
 MIIGWzCCBEOgAwIBAgICEAEwDQYJKoZIhvcNAQELBQAwgaoxCzAJBgNVBAYTAkVF
