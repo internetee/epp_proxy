@@ -47,12 +47,12 @@ handle_cast(serve, State = #state{socket = Socket}) ->
 handle_cast(greeting,
             State = #state{socket = Socket, session_id = SessionId,
                            headers = Headers}) ->
-    Request = epp_http_client:request_builder(#{command =>
-                                                    "hello",
-                                                session_id => SessionId,
-                                                raw_frame => "",
-                                                headers => Headers,
-                                                cl_trid => nomatch}),
+    Request =
+        epp_http_client:request_builder(#{command => "hello",
+                                          session_id => SessionId,
+                                          raw_frame => "",
+                                          headers => Headers,
+                                          cl_trid => nomatch}),
     {_Status, Body} = epp_http_client:request(Request),
     frame_to_socket(Body, Socket),
     gen_server:cast(self(), process_command),
@@ -73,25 +73,23 @@ handle_cast(process_command,
     RawFrame = frame_from_socket(Socket, State),
     case parse_frame(RawFrame) of
         #valid_frame{command = Command, cl_trid = ClTRID} ->
-            Request = epp_http_client:request_builder(#{command =>
-                                                            Command,
-                                                        session_id => SessionId,
-                                                        raw_frame => RawFrame,
-                                                        headers => Headers,
-                                                        cl_trid => ClTRID}),
-            {_Status, Body} = epp_http_client:request(Request);
-        #invalid_frame{message = Message, code = Code,
-                       cl_trid = ClTRID} ->
+            Request =
+                epp_http_client:request_builder(#{command => Command,
+                                                  session_id => SessionId,
+                                                  raw_frame => RawFrame,
+                                                  headers => Headers,
+                                                  cl_trid => ClTRID});
+        #invalid_frame{message = Message, code = Code, cl_trid = ClTRID} ->
             Command = "error",
-            Request = epp_http_client:request_builder(#{command =>
-                                                            Command,
-                                                        session_id => SessionId,
-                                                        headers => Headers,
-                                                        code => Code,
-                                                        message => Message,
-                                                        cl_trid => ClTRID}),
-            {_Status, Body} = epp_http_client:error_request(Request)
+            Request =
+                epp_http_client:request_builder(#{command => Command,
+                                                  session_id => SessionId,
+                                                  headers => Headers,
+                                                  code => Code,
+                                                  message => Message,
+                                                  cl_trid => ClTRID})
     end,
+    {_Status, Body} = epp_http_client:request(Request),
     frame_to_socket(Body, Socket),
     %% On logout, close the socket.
     %% Else, go back to the beginning of the loop.
