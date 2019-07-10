@@ -22,6 +22,8 @@
 
 -define(XMLErrorMessage, <<"Command syntax error.">>).
 
+-define(DefaultTimeout, 120000).
+
 %% Initialize process
 %% Assign an unique session id that will be passed on to http server as a cookie
 init(Socket) ->
@@ -123,7 +125,7 @@ read_length(Socket) ->
     end.
 
 read_frame(Socket, FrameLength) ->
-    case ssl:recv(Socket, FrameLength) of
+    case ssl:recv(Socket, FrameLength, ?DefaultTimeout) of
         {ok, Data} -> {ok, Data};
         {error, Reason} -> {error, Reason}
     end.
@@ -141,18 +143,28 @@ write_line(Socket, Line) -> ok = ssl:send(Socket, Line).
 %% Return the frame binary at the very end.
 %% If the client closes connection abruptly, then kill the process
 frame_from_socket(Socket, State) ->
-    Length = case read_length(Socket) of
-                 {ok, Data} -> Data;
-                 {error, closed} -> log_and_exit(State)
-             end,
-    Frame = case read_frame(Socket, Length) of
-                {ok, FrameData} -> FrameData;
-                {error, closed} -> log_and_exit(State)
-            end,
-    Frame.
+    {ok, CompleteFrame} = ssl:recv(Socket, 0, ?DefaultTimeout),
+    EPPEnvelope = binary:part(CompleteFrame, {0, 4}),
+    ReportedLength = binary:decode_unsigned(EPPEnvelope, big),
+
+    read_until_exhausted(Socket, CompleteFrame, ReportedLength).
+
+read_until_exhausted(Socket, Frame, ExpectedLength) ->
+    if
+        ExpectedLength =:= byte_size(Frame) ->
+            binary:part(Frame, {byte_size(Frame), 4 - ExpectedLength});
+        ExpectedLength > byte_size(Frame) ->
+            {ok, NextFrame} = ssl:recv(Socket, 0, ?DefaultTimeout),
+            NewFrame = <<Frame/binary, NextFrame/binary>>,
+            read_until_exhausted(Socket, NewFrame, ExpectedLength)
+    end.
 
 log_and_exit(State) ->
     lager:info("Client closed connection: [~p]~n", [State]),
+    exit(normal).
+
+log_on_timeout(State) ->
+    lager:info("Client timed out: [~p]~n", [State]),
     exit(normal).
 
 %% Extract state info from socket. Fail if you must.
