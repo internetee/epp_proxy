@@ -101,8 +101,10 @@ handle_cast(process_command,
     %% On logout, close the socket.
     %% Else, go back to the beginning of the loop.
     if Command =:= "logout" ->
-	   ok = ssl:shutdown(Socket, read_write),
-	   {stop, normal, State};
+	   case ssl:shutdown(Socket, read_write) of
+	     ok -> {stop, normal, State};
+	     {error, closed} -> {stop, normal, State}
+	   end;
        true ->
 	   gen_server:cast(self(), process_command),
 	   {noreply,
