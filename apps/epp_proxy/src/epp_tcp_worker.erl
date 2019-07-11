@@ -98,9 +98,9 @@ handle_cast(process_command,
     %% Else, go back to the beginning of the loop.
     if Command =:= "logout" ->
 	   case gen_tcp:shutdown(Socket, read_write) of
-               ok -> {stop, normal, State};
-               {error, closed} -> {stop, normal, State}
-           end;
+	     ok -> {stop, normal, State};
+	     {error, closed} -> {stop, normal, State}
+	   end;
        true ->
 	   gen_server:cast(self(), process_command),
 	   {noreply,
@@ -135,13 +135,13 @@ state_from_socket(Socket, State) ->
 
 frame_from_socket(Socket, State) ->
     case gen_tcp:recv(Socket, 0, ?DefaultTimeout) of
-        {ok, Data} ->
-            EPPEnvelope = binary:part(Data, {0, 4}),
-            ReportedLength = binary:decode_unsigned(EPPEnvelope,
-                                                    big),
-            read_until_exhausted(Socket, ReportedLength, Data);
-        {error, closed} -> log_and_exit(State);
-        {error, timeout} -> log_on_timeout(State)
+      {ok, Data} ->
+	  EPPEnvelope = binary:part(Data, {0, 4}),
+	  ReportedLength = binary:decode_unsigned(EPPEnvelope,
+						  big),
+	  read_until_exhausted(Socket, ReportedLength, Data);
+      {error, closed} -> log_and_exit(State);
+      {error, timeout} -> log_on_timeout(State)
     end.
 
 %% When an EPP message is long, it will be received in smaller chunks.
@@ -156,7 +156,8 @@ read_until_exhausted(Socket, ExpectedLength, Frame) ->
 	   binary:part(Frame,
 		       {byte_size(Frame), 4 - ExpectedLength});
        ExpectedLength > byte_size(Frame) ->
-	   {ok, NextFrame} = gen_tcp:recv(Socket, 0, ?DefaultTimeout),
+	   {ok, NextFrame} = gen_tcp:recv(Socket, 0,
+					  ?DefaultTimeout),
 	   NewFrame = <<Frame/binary, NextFrame/binary>>,
 	   read_until_exhausted(Socket, ExpectedLength, NewFrame)
     end.
