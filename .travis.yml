@@ -4,6 +4,5 @@ otp_release:
   - 21.3.8
 
 script:
-  - "rebar3 eunit"
-  - "rebar3 ct --sys_config config/test.config --readable=false --cover"
+  - "rebar3 ct --sys_config config/test.config --readable=false --cover --verbose=true"
   - "rebar3 cover --verbose"
