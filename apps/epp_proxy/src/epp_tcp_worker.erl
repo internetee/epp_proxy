@@ -22,6 +22,8 @@
 
 -define(XMLErrorMessage, <<"Command syntax error.">>).
 
+-define(DefaultTimeout, 120000).
+
 %% Initialize process
 %% Assign an unique session id that will be passed on to http server as a cookie
 init(Socket) ->
@@ -95,8 +97,10 @@ handle_cast(process_command,
     %% On logout, close the socket.
     %% Else, go back to the beginning of the loop.
     if Command =:= "logout" ->
-	   ok = gen_tcp:shutdown(Socket, read_write),
-	   {stop, normal, State};
+	   case gen_tcp:shutdown(Socket, read_write) of
+	     ok -> {stop, normal, State};
+	     {error, closed} -> {stop, normal, State}
+	   end;
        true ->
 	   gen_server:cast(self(), process_command),
 	   {noreply,
@@ -111,30 +115,12 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 write_line(Socket, Line) ->
     ok = gen_tcp:send(Socket, Line).
 
-read_length(Socket) ->
-    case gen_tcp:recv(Socket, 4) of
-      {ok, Data} ->
-	  Length = binary:decode_unsigned(Data, big),
-	  LengthToReceive =
-	      epp_util:frame_length_to_receive(Length),
-	  {ok, LengthToReceive};
-      {error, Reason} ->
-	  io:format("Error: ~p~n", [Reason]), {error, Reason}
-    end.
-
-read_frame(Socket, FrameLength) ->
-    case gen_tcp:recv(Socket, FrameLength) of
-      {ok, Data} -> {ok, Data};
-      {error, Reason} ->
-	  io:format("Error: ~p~n", [Reason]), {error, Reason}
-    end.
-
 %% Wrap a message in EPP frame, and then send it to socket.
 frame_to_socket(Message, Socket) ->
     Length = epp_util:frame_length_to_send(Message),
     ByteSize = <<Length:32/big>>,
-    write_line(Socket, ByteSize),
-    write_line(Socket, Message).
+    CompleteMessage = <<ByteSize/binary, Message/binary>>,
+    write_line(Socket, CompleteMessage).
 
 %% Extract state info from socket. Fail if you must.
 state_from_socket(Socket, State) ->
@@ -147,18 +133,42 @@ state_from_socket(Socket, State) ->
 	       [NewState]),
     NewState.
 
-%% First, listen for 4 bytes, then listen until the declared length.
-%% Return the frame binary at the very end.
 frame_from_socket(Socket, State) ->
-    Length = case read_length(Socket) of
-	       {ok, Data} -> Data;
-	       {error, _Details} -> {stop, normal, State}
-	     end,
-    Frame = case read_frame(Socket, Length) of
-	      {ok, FrameData} -> FrameData;
-	      {error, _FrameDetails} -> {stop, normal, State}
-	    end,
-    Frame.
+    case gen_tcp:recv(Socket, 0, ?DefaultTimeout) of
+      {ok, Data} ->
+	  EPPEnvelope = binary:part(Data, {0, 4}),
+	  ReportedLength = binary:decode_unsigned(EPPEnvelope,
+						  big),
+	  read_until_exhausted(Socket, ReportedLength, Data);
+      {error, closed} -> log_and_exit(State);
+      {error, timeout} -> log_on_timeout(State)
+    end.
+
+%% When an EPP message is long, it will be received in smaller chunks.
+%% For example, first 4 bytes equal 800 000, but we'd receive only 200 000
+%% in the first chunk. In such a case, we should listen for more.
+%%
+%% Note that there is no case for messages the exceed the reported length of a
+%% frame. Those cases are invalid from the perspective of EPP protocol and
+%% should not be supported.
+read_until_exhausted(Socket, ExpectedLength, Frame) ->
+    if ExpectedLength =:= byte_size(Frame) ->
+	   binary:part(Frame,
+		       {byte_size(Frame), 4 - ExpectedLength});
+       ExpectedLength > byte_size(Frame) ->
+	   {ok, NextFrame} = gen_tcp:recv(Socket, 0,
+					  ?DefaultTimeout),
+	   NewFrame = <<Frame/binary, NextFrame/binary>>,
+	   read_until_exhausted(Socket, ExpectedLength, NewFrame)
+    end.
+
+log_and_exit(State) ->
+    lager:info("Client closed connection: [~p]~n", [State]),
+    exit(normal).
+
+log_on_timeout(State) ->
+    lager:info("Client timed out: [~p]~n", [State]),
+    exit(normal).
 
 %% Get status, XML record, command and clTRID if defined.
 %% Otherwise return an invalid frame with predefined error message and code.
