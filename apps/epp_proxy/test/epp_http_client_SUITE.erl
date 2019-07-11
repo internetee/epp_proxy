@@ -5,15 +5,15 @@
 
 -export([all/0]).
 
--export([hello_request_builder_case/1,
-         error_request_builder_case/1,
-         command_request_builder_case/1]).
+-export([hello_request_builder_test_case/1,
+         error_request_builder_test_case/1,
+         command_request_builder_test_case/1]).
 
-all() -> [hello_request_builder_case,
-         error_request_builder_case,
-         command_request_builder_case].
+all() -> [hello_request_builder_test_case,
+         error_request_builder_test_case,
+         command_request_builder_test_case].
 
-hello_request_builder_case(_Config) ->
+hello_request_builder_test_case(_Config) ->
     RequestMap = #{command => "hello", session_id => "Random",
                    cl_trid => "EE-123456789", raw_frame => "",
                    headers => [{"User-Agent", <<"EPP proxy">>}]},
@@ -25,7 +25,7 @@ hello_request_builder_case(_Config) ->
     true = is_record(Request, epp_request),
     ExpectedTuple =  Request.
 
-error_request_builder_case(_Config) ->
+error_request_builder_test_case(_Config) ->
     RequestMap = #{command => "error", session_id => "Random",
                    cl_trid => "EE-123456789", code => <<"2001">>,
                    message => <<"Expected better XML">>,
@@ -41,7 +41,7 @@ error_request_builder_case(_Config) ->
     ExpectedTuple = Request,
     ok.
 
-command_request_builder_case(_Config) ->
+command_request_builder_test_case(_Config) ->
     RequestMap = #{command => "create", session_id => "Random",
                    cl_trid => "EE-123456789", raw_frame => "Some XML here",
                    headers => [{"User-Agent", <<"EPP proxy">>}]},

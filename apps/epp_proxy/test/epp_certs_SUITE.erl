@@ -3,15 +3,15 @@
 -include_lib("public_key/include/public_key.hrl").
 
 -export([all/0]).
--export([der_certificate_case/1, subject_from_otp_certificate_case/1,
-         common_name_from_subject_case/1]).
+-export([der_certificate_test_case/1, subject_from_otp_certificate_test_case/1,
+         common_name_from_subject_test_case/1]).
 
-all() -> [der_certificate_case, subject_from_otp_certificate_case,
-          common_name_from_subject_case].
+all() -> [der_certificate_test_case, subject_from_otp_certificate_test_case,
+          common_name_from_subject_test_case].
 
 %% Run Unit tests.
 %% Todo: these should be property tests, not unit tests.
-der_certificate_case(_Config) ->
+der_certificate_test_case(_Config) ->
     PemEntries = public_key:pem_decode(certificate_pem()),
     {value, CertEntry} = lists:keysearch('Certificate', 1, PemEntries),
     {_, DerCert, _} = CertEntry,
@@ -19,13 +19,13 @@ der_certificate_case(_Config) ->
     true = is_record(Certificate, 'OTPCertificate'),
     ok.
 
-subject_from_otp_certificate_case(_Config) ->
+subject_from_otp_certificate_test_case(_Config) ->
     Certificate = test_certificate(),
     Subject = epp_certs:subject_from_otp_certificate(Certificate),
     {rdnSequence, _ListOfAttributes} = Subject,
     ok.
 
-common_name_from_subject_case(_Config) ->
+common_name_from_subject_test_case(_Config) ->
     Certificate = test_certificate(),
     Subject = epp_certs:subject_from_otp_certificate(Certificate),
     CommonName = epp_certs:common_name_from_subject(Subject),
