@@ -2,7 +2,7 @@
 
 -export([create_map/1, create_session_id/1,
 	 frame_length/1, frame_length_to_receive/1,
-	 frame_length_to_send/1, readable_ip/1, session_id/1]).
+	 frame_length_to_send/1, readable_ip/1, session_id/1, path_for_file/1]).
 
 -define(OFFSET, 4).
 
@@ -67,3 +67,11 @@ readable_ip({FirstOctet, SecondOctet, ThirdOctet,
 	    integer_to_list(FourthOctet)],
     Binary = list_to_binary(List),
     Binary.
+
+path_for_file(Filename) ->
+    case filename:pathtype(Filename) of
+        absolute -> Filename;
+        relative ->
+            CWD = code:priv_dir(epp_proxy),
+            filename:join(CWD, Filename)
+    end.

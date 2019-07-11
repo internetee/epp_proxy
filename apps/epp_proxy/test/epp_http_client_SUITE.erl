@@ -9,16 +9,17 @@
          error_request_builder_test_case/1,
          command_request_builder_test_case/1]).
 
-all() -> [hello_request_builder_test_case,
-         error_request_builder_test_case,
-         command_request_builder_test_case].
+all() ->
+    [hello_request_builder_test_case,
+     error_request_builder_test_case,
+     command_request_builder_test_case].
 
 hello_request_builder_test_case(_Config) ->
     RequestMap = #{command => "hello", session_id => "Random",
                    cl_trid => "EE-123456789", raw_frame => "",
                    headers => [{"User-Agent", <<"EPP proxy">>}]},
     Request = epp_http_client:request_builder(RequestMap),
-    ExpectedTuple = {epp_request,get,"https://localhost:9292/epp/session/hello",
+    ExpectedTuple = {epp_request,get,"http://localhost:9292/epp/session/hello",
                      [],
                      [<<"session=Random; Version=1">>],
                      [{"User-Agent",<<"EPP proxy">>}], "hello"},
@@ -31,7 +32,7 @@ error_request_builder_test_case(_Config) ->
                    message => <<"Expected better XML">>,
                    headers => [{"User-Agent", <<"EPP proxy">>}]},
     Request = epp_http_client:request_builder(RequestMap),
-    ExpectedTuple = {epp_request,get,"https://localhost:9292/epp/error",
+    ExpectedTuple = {epp_request,get,"http://localhost:9292/epp/error",
                      [{<<"code">>,<<"2001">>},
                       {<<"msg">>,<<"Expected better XML">>},
                       {<<"clTRID">>,"EE-123456789"}],
@@ -47,7 +48,7 @@ command_request_builder_test_case(_Config) ->
                    headers => [{"User-Agent", <<"EPP proxy">>}]},
     Request = epp_http_client:request_builder(RequestMap),
     ExpectedTuple = {epp_request,post,
-                     "https://localhost:9292/epp/command/create",
+                     "http://localhost:9292/epp/command/create",
                      {multipart,
                       [{<<"raw_frame">>,"Some XML here"},
                        {<<"clTRID">>,"EE-123456789"}]},
