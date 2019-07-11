@@ -5,99 +5,98 @@
 -behaviour(epp_http_client_behaviour).
 
 -export([request/1, request_builder/1]).
+
 -define(errorCommand, "error").
+
 -define(helloCommand, "hello").
 
 %% Callback API
 request(#epp_request{} = Request) ->
     HackneyArgs = handle_args(Request),
     case apply(hackney, request, HackneyArgs) of
-        {error, Error} -> log_and_return_canned(Error, Request);
-        {Status, _StatusCode, _Headers, ClientRef} ->
-            {ok, Body} = hackney:body(ClientRef), {Status, Body}
+      {error, Error} -> log_and_return_canned(Error, Request);
+      {Status, _StatusCode, _Headers, ClientRef} ->
+	  {ok, Body} = hackney:body(ClientRef), {Status, Body}
     end.
 
 request_builder(Map) -> request_from_map(Map).
 
 %% Private API
 -spec handle_args(epp_request()) -> list().
-%% For hello command, we ignore the payload, and send an empty body over the wire.
-handle_args(#epp_request{method=get,
-                         url = URL,
-                         headers = Headers,
-                         cookies = Cookies,
-                         epp_verb = ?helloCommand}) ->
-    [get, URL, Headers, "", [{cookie, Cookies}, insecure]];
 
+%% For hello command, we ignore the payload, and send an empty body over the wire.
+handle_args(#epp_request{method = get, url = URL,
+			 headers = Headers, cookies = Cookies,
+			 epp_verb = ?helloCommand}) ->
+    [get, URL, Headers, "", [{cookie, Cookies}, insecure]];
 %% For error command, we convert the message and code into query parameters,
 %% and append them to the original URL.
-handle_args(#epp_request{method=get,
-                         url = URL,
-                         payload = Payload,
-                         headers = Headers,
-                         cookies = Cookies,
-                         epp_verb = ?errorCommand}) ->
+handle_args(#epp_request{method = get, url = URL,
+			 payload = Payload, headers = Headers,
+			 cookies = Cookies, epp_verb = ?errorCommand}) ->
     QueryString = hackney_url:qs(Payload),
     CompleteURL = [URL, <<"?">>, QueryString],
-    [get, CompleteURL, Headers, "", [{cookie, Cookies}, insecure]];
+    [get, CompleteURL, Headers, "",
+     [{cookie, Cookies}, insecure]];
 %% For valid commands, we set the multipart body earlier, now we just pass it on.
-handle_args(#epp_request{method=post,
-                         url = URL,
-                         payload = Payload,
-                         headers = Headers,
-                         cookies = Cookies}) ->
-    [post, URL, Headers, Payload, [{cookie, Cookies}, insecure]].
+handle_args(#epp_request{method = post, url = URL,
+			 payload = Payload, headers = Headers,
+			 cookies = Cookies}) ->
+    [post, URL, Headers, Payload,
+     [{cookie, Cookies}, insecure]].
 
 %% Map request and return values.
 request_from_map(#{command := ?errorCommand,
-                   session_id := SessionId, code := Code,
-                   message := Message, headers := Headers,
-                   cl_trid := ClTRID}) ->
+		   session_id := SessionId, code := Code,
+		   message := Message, headers := Headers,
+		   cl_trid := ClTRID}) ->
     URL = epp_router:route_request(?errorCommand),
-    RequestMethod = epp_router:request_method(?errorCommand),
+    RequestMethod =
+	epp_router:request_method(?errorCommand),
     Cookie = hackney_cookie:setcookie("session", SessionId,
-                                      []),
+				      []),
     QueryParams = query_params(Code, Message, ClTRID),
     Headers = Headers,
     Request = #epp_request{url = URL,
-                           method = RequestMethod,
-                           payload = QueryParams, cookies = [Cookie],
-                           headers = Headers, epp_verb= ?errorCommand},
+			   method = RequestMethod, payload = QueryParams,
+			   cookies = [Cookie], headers = Headers,
+			   epp_verb = ?errorCommand},
     lager:info("Error Request from map: [~p]~n", [Request]),
     Request;
 request_from_map(#{command := Command,
-                   session_id := SessionId, raw_frame := RawFrame,
-                   headers := Headers, cl_trid := ClTRID}) ->
+		   session_id := SessionId, raw_frame := RawFrame,
+		   headers := Headers, cl_trid := ClTRID}) ->
     URL = epp_router:route_request(Command),
     RequestMethod = epp_router:request_method(Command),
     Cookie = hackney_cookie:setcookie("session", SessionId,
-                                      []),
+				      []),
     Body = request_body(Command, RawFrame, ClTRID),
     Headers = Headers,
     Request = #epp_request{url = URL,
-                           method = RequestMethod, payload = Body,
-                           cookies = [Cookie], headers = Headers,
-                           epp_verb = Command},
+			   method = RequestMethod, payload = Body,
+			   cookies = [Cookie], headers = Headers,
+			   epp_verb = Command},
     lager:info("Request from map: [~p]~n", [Request]),
     Request;
 request_from_map(#{command := Command,
-                   session_id := SessionId, raw_frame := RawFrame,
-                   common_name := CommonName, client_cert := ClientCert,
-                   peer_ip := PeerIp, cl_trid := ClTRID}) ->
+		   session_id := SessionId, raw_frame := RawFrame,
+		   common_name := CommonName, client_cert := ClientCert,
+		   peer_ip := PeerIp, cl_trid := ClTRID}) ->
     URL = epp_router:route_request(Command),
     RequestMethod = epp_router:request_method(Command),
     Cookie = hackney_cookie:setcookie("session", SessionId,
-                                      []),
+				      []),
     Body = request_body(Command, RawFrame, ClTRID),
     Headers = [{"SSL_CLIENT_CERT", ClientCert},
-               {"SSL_CLIENT_S_DN_CN", CommonName},
-               {"User-Agent", <<"EPP proxy">>},
-               {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}],
+	       {"SSL_CLIENT_S_DN_CN", CommonName},
+	       {"User-Agent", <<"EPP proxy">>},
+	       {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}],
     Request = #epp_request{url = URL,
-                           method = RequestMethod, payload = Body,
-                           cookies = [Cookie], headers = Headers,
-                           epp_verb = Command},
-    lager:info("Unified Request from map: [~p]~n", [Request]),
+			   method = RequestMethod, payload = Body,
+			   cookies = [Cookie], headers = Headers,
+			   epp_verb = Command},
+    lager:info("Unified Request from map: [~p]~n",
+	       [Request]),
     Request.
 
 %% Return form data or an empty list.
@@ -121,7 +120,7 @@ query_params(Code, Message, ClTRID) ->
 log_and_return_canned(Error, Request) ->
     lager:alert("Registry cannot be reached!"),
     lager:alert("Error contacting registry: [~p, ~p]~n",
-                [Error, Request]),
+		[Error, Request]),
     {2400, canned_response()}.
 
 %% In case registry is not accessible, return this response.

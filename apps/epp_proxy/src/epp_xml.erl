@@ -6,12 +6,12 @@
 
 %% Get command from an xmlElement. Otherwise return undefined.
 get_command(Record)
-  when is_record(Record, xmlElement) ->
+    when is_record(Record, xmlElement) ->
     case xmerl_xpath:string("name(/epp/command/*[1])",
-                            Record)
-    of
-        {xmlObj, string, []} -> undefined;
-        {xmlObj, string, Command} -> Command
+			    Record)
+	of
+      {xmlObj, string, []} -> undefined;
+      {xmlObj, string, Command} -> Command
     end;
 get_command(_) -> undefined.
 
@@ -25,10 +25,10 @@ parse(_) -> {error, {fatal, {expected_binary_or_list}}}.
 %% Parse a record that came from the wire and return a xmlElement record.
 parse_list(List) when is_list(List) ->
     try xmerl_scan:string(List, [{quiet, true}]) of
-        {Record, []} when is_record(Record, xmlElement) ->
-            {ok, Record}
+      {Record, []} when is_record(Record, xmlElement) ->
+	  {ok, Record}
     catch
-        exit:X -> {error, X}
+      exit:X -> {error, X}
     end.
 
 %% The idea is that even when XML command is invalid,
@@ -43,7 +43,7 @@ find_cltrid(_) -> nomatch.
 run_regex(Text) ->
     {ok, MP} = re:compile("<clTRID>(?<cltrid>.+)</clTRID>"),
     case re:run(Text, MP, [{capture, ["cltrid"], binary}])
-    of
-        {match, [Binary]} -> Binary;
-        nomatch -> nomatch
+	of
+      {match, [Binary]} -> Binary;
+      nomatch -> nomatch
     end.

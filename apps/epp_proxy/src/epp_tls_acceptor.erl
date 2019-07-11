@@ -10,7 +10,7 @@
 
 %% gen_server callbacks
 -export([handle_call/3, handle_cast/2, init/1,
-         start_link/1]).
+	 start_link/1]).
 
 -export([crl_file/0]).
 
@@ -18,21 +18,21 @@
 
 start_link(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, Port,
-                          []).
+			  []).
 
 init(Port) ->
     Options = [binary, {packet, raw}, {active, false},
-               {reuseaddr, true}, {verify, verify_peer}, {depth, 1},
-               {cacertfile, ca_cert_file()}, {certfile, cert_file()},
-               {keyfile, key_file()}, {crl_check, peer},
-               {crl_cache,
-                {ssl_crl_cache, {internal, [{http, 5000}]}}}],
+	       {reuseaddr, true}, {verify, verify_peer}, {depth, 1},
+	       {cacertfile, ca_cert_file()}, {certfile, cert_file()},
+	       {keyfile, key_file()}, {crl_check, peer},
+	       {crl_cache,
+		{ssl_crl_cache, {internal, [{http, 5000}]}}}],
     ssl_crl_cache:insert({file, crl_file()}),
     {ok, ListenSocket} = ssl:listen(Port, Options),
     gen_server:cast(self(), accept),
     {ok,
      #state{socket = ListenSocket, port = Port,
-            options = Options}}.
+	    options = Options}}.
 
 %% Acceptor has only one state that goes in a loop:
 %% 1. Listen for a connection from anyone.
@@ -41,8 +41,8 @@ init(Port) ->
 %%    the socket.
 %% 4. Go back to listening.
 handle_cast(accept,
-            State = #state{socket = ListenSocket, port = Port,
-                           options = Options}) ->
+	    State = #state{socket = ListenSocket, port = Port,
+			   options = Options}) ->
     {ok, AcceptSocket} = ssl:transport_accept(ListenSocket),
     {ok, NewOwner} = create_worker(AcceptSocket),
     ok = ssl:controlling_process(AcceptSocket, NewOwner),
@@ -51,7 +51,7 @@ handle_cast(accept,
     gen_server:cast(self(), accept),
     {noreply,
      State#state{socket = ListenSocket, port = Port,
-                 options = Options}}.
+		 options = Options}}.
 
 handle_call(_E, _From, State) -> {noreply, State}.
 
@@ -59,32 +59,32 @@ handle_call(_E, _From, State) -> {noreply, State}.
 %% but for the purpose of order we should put them in a supervision tree.
 create_worker(Socket) ->
     ChildSpec = #{id => rand:uniform(), type => worker,
-                  modules => [?WORKER], restart => temporary,
-                  start => {?WORKER, start_link, [Socket]}},
+		  modules => [?WORKER], restart => temporary,
+		  start => {?WORKER, start_link, [Socket]}},
     supervisor:start_child(?POOL_SUPERVISOR, ChildSpec).
 
 %% Private functions for returning paths to files. It costs almost nothing
 %% to query them from ETS.
 ca_cert_file() ->
     case application:get_env(epp_proxy, cacertfile_path) of
-        undefined -> undefined;
-        {ok, CaCertFile} -> CaCertFile
+      undefined -> undefined;
+      {ok, CaCertFile} -> CaCertFile
     end.
 
 cert_file() ->
     case application:get_env(epp_proxy, certfile_path) of
-        undefined -> undefined;
-        {ok, CertFile} -> CertFile
+      undefined -> undefined;
+      {ok, CertFile} -> CertFile
     end.
 
 key_file() ->
     case application:get_env(epp_proxy, keyfile_path) of
-        undefined -> undefined;
-        {ok, KeyFile} -> KeyFile
+      undefined -> undefined;
+      {ok, KeyFile} -> KeyFile
     end.
 
 crl_file() ->
     case application:get_env(epp_proxy, crlfile_path) of
-        undefined -> undefined;
-        {ok, CrlFile} -> CrlFile
+      undefined -> undefined;
+      {ok, CrlFile} -> CrlFile
     end.
