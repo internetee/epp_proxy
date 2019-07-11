@@ -7,4 +7,5 @@
 %% Abstract module for http client behaviour. It should call EPP HTTP server
 %% and return a response back to the caller.
 -callback request(epp_request()) -> http_response().
+
 -callback request_builder(map()) -> epp_request().
