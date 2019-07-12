@@ -25,61 +25,61 @@ request_method_test_case(_Config) ->
 
 %% TODO: Make less verbose and repetitive
 hello_url_test_case(_Config) ->
-    "http://localhost:9292/epp/session/hello" = epp_router:route_request("hello"),
-    "http://localhost:9292/epp/session/hello" = epp_router:route_request(<<"hello">>),
+    "http://localhost:9292/session/hello" = epp_router:route_request("hello"),
+    "http://localhost:9292/session/hello" = epp_router:route_request(<<"hello">>),
     ok.
 
 login_url_test_case(_Config) ->
-    "http://localhost:9292/epp/session/login" = epp_router:route_request("login"),
-    "http://localhost:9292/epp/session/login" = epp_router:route_request(<<"login">>),
+    "http://localhost:9292/session/login" = epp_router:route_request("login"),
+    "http://localhost:9292/session/login" = epp_router:route_request(<<"login">>),
     ok.
 
 logout_url_test_case(_Config) ->
-    "http://localhost:9292/epp/session/logout" = epp_router:route_request("logout"),
-    "http://localhost:9292/epp/session/logout" = epp_router:route_request(<<"logout">>),
+    "http://localhost:9292/session/logout" = epp_router:route_request("logout"),
+    "http://localhost:9292/session/logout" = epp_router:route_request(<<"logout">>),
     ok.
 
 check_url_test_case(_Config) ->
-    "http://localhost:9292/epp/command/check" = epp_router:route_request("check"),
-    "http://localhost:9292/epp/command/check" = epp_router:route_request(<<"check">>),
+    "http://localhost:9292/command/check" = epp_router:route_request("check"),
+    "http://localhost:9292/command/check" = epp_router:route_request(<<"check">>),
     ok.
 
 info_url_test_case(_Config) ->
-    "http://localhost:9292/epp/command/info" = epp_router:route_request("info"),
-    "http://localhost:9292/epp/command/info" = epp_router:route_request(<<"info">>),
+    "http://localhost:9292/command/info" = epp_router:route_request("info"),
+    "http://localhost:9292/command/info" = epp_router:route_request(<<"info">>),
     ok.
 
 poll_url_test_case(_Config) ->
-    "http://localhost:9292/epp/command/poll" = epp_router:route_request("poll"),
-    "http://localhost:9292/epp/command/poll" = epp_router:route_request(<<"poll">>),
+    "http://localhost:9292/command/poll" = epp_router:route_request("poll"),
+    "http://localhost:9292/command/poll" = epp_router:route_request(<<"poll">>),
     ok.
 
 create_url_test_case(_Config) ->
-    "http://localhost:9292/epp/command/create" = epp_router:route_request("create"),
-    "http://localhost:9292/epp/command/create" = epp_router:route_request(<<"create">>),
+    "http://localhost:9292/command/create" = epp_router:route_request("create"),
+    "http://localhost:9292/command/create" = epp_router:route_request(<<"create">>),
     ok.
 
 delete_url_test_case(_Config) ->
-    "http://localhost:9292/epp/command/delete" = epp_router:route_request("delete"),
-    "http://localhost:9292/epp/command/delete" = epp_router:route_request(<<"delete">>),
+    "http://localhost:9292/command/delete" = epp_router:route_request("delete"),
+    "http://localhost:9292/command/delete" = epp_router:route_request(<<"delete">>),
     ok.
 
 renew_url_test_case(_Config) ->
-    "http://localhost:9292/epp/command/renew" = epp_router:route_request("renew"),
-    "http://localhost:9292/epp/command/renew" = epp_router:route_request(<<"renew">>),
+    "http://localhost:9292/command/renew" = epp_router:route_request("renew"),
+    "http://localhost:9292/command/renew" = epp_router:route_request(<<"renew">>),
     ok.
 
 update_url_test_case(_Config) ->
-    "http://localhost:9292/epp/command/update" = epp_router:route_request("update"),
-    "http://localhost:9292/epp/command/update" = epp_router:route_request(<<"update">>),
+    "http://localhost:9292/command/update" = epp_router:route_request("update"),
+    "http://localhost:9292/command/update" = epp_router:route_request(<<"update">>),
     ok.
 
 transfer_url_test_case(_Config) ->
-    "http://localhost:9292/epp/command/transfer" = epp_router:route_request("transfer"),
-    "http://localhost:9292/epp/command/transfer" = epp_router:route_request(<<"transfer">>),
+    "http://localhost:9292/command/transfer" = epp_router:route_request("transfer"),
+    "http://localhost:9292/command/transfer" = epp_router:route_request(<<"transfer">>),
     ok.
 
 error_url_test_case(_Config) ->
-    "http://localhost:9292/epp/error" = epp_router:route_request("error"),
-    "http://localhost:9292/epp/error" = epp_router:route_request(<<"error">>),
+    "http://localhost:9292/error" = epp_router:route_request("error"),
+    "http://localhost:9292/error" = epp_router:route_request(<<"error">>),
     ok.
