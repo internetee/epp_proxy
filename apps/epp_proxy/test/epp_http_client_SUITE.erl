@@ -4,15 +4,25 @@
 -include_lib("common_test/include/ct.hrl").
 
 -export([all/0]).
-
+-export([init_per_suite/1, end_per_suite/1]).
 -export([hello_request_builder_test_case/1,
          error_request_builder_test_case/1,
-         command_request_builder_test_case/1]).
+         command_request_builder_test_case/1,
+         registry_unreachable_test_case/1]).
 
 all() ->
     [hello_request_builder_test_case,
      error_request_builder_test_case,
-     command_request_builder_test_case].
+     command_request_builder_test_case,
+     registry_unreachable_test_case].
+
+init_per_suite(Config) ->
+    application:ensure_all_started(hackney),
+    Config.
+
+end_per_suite(Config) ->
+    application:stop(hackney),
+    Config.
 
 hello_request_builder_test_case(_Config) ->
     RequestMap = #{command => "hello", session_id => "Random",
@@ -56,4 +66,16 @@ command_request_builder_test_case(_Config) ->
                      [{"User-Agent",<<"EPP proxy">>}], "create"},
     true = is_record(Request, epp_request),
     ExpectedTuple = Request,
+    ok.
+
+registry_unreachable_test_case(_Config) ->
+    Request = {epp_request,
+               post,
+               "http://localhost:9999/someurl",
+               {multipart,
+                [{<<"raw_frame">>,"Some XML here"},
+                 {<<"clTRID">>,"EE-123456789"}]},
+               [<<"session=Random; Version=1">>],
+               [{"User-Agent",<<"EPP proxy">>}], "create"},
+    {2400, _CannedResponse} = epp_http_client:request(Request),
     ok.

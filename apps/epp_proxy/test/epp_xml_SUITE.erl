@@ -32,6 +32,7 @@
          find_cltrid_empty_binary_test_case/1,
          find_cltrid_empty_list_test_case/1,
          find_cltrid_list_test_case/1,
+         find_cltrid_atom_test_case/1,
          get_command_success_test_case/1,
          get_command_xml_not_epp_failure_test_case/1,
          get_command_failure_test_case/1]).
@@ -45,6 +46,7 @@ all() -> [parse_not_a_list_or_binary_test_case,
           find_cltrid_empty_binary_test_case,
           find_cltrid_empty_list_test_case,
           find_cltrid_list_test_case,
+          find_cltrid_atom_test_case,
           get_command_success_test_case,
           get_command_xml_not_epp_failure_test_case,
           get_command_failure_test_case].
@@ -96,6 +98,11 @@ find_cltrid_empty_binary_test_case(_Config) ->
 find_cltrid_binary_test_case(_Config) ->
     Input = ?sampleCommandList,
     <<"sample1trid">> = epp_xml:find_cltrid(Input),
+    ok.
+
+find_cltrid_atom_test_case(_Config) ->
+    Input = atom,
+    nomatch = epp_xml:find_cltrid(Input),
     ok.
 
 %% get_command
