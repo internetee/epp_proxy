@@ -27,7 +27,11 @@ class BackendServer < Roda
 
     end
 
-    r.on "error" do
+    r.get "error" do
+      @code = r.params['code']
+      @msg = r.params['msg']
+
+      render("error")
     end
   end
 end

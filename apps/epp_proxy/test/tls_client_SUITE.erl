@@ -9,14 +9,16 @@
          greetings_test_case/1,
          session_test_case/1,
          valid_command_test_case/1,
-         invalid_command_test_case/1]).
+         invalid_command_test_case/1,
+         error_test_case/1]).
 
 all() ->
     [frame_size_test_case,
      greetings_test_case,
      session_test_case,
      valid_command_test_case,
-     invalid_command_test_case].
+     invalid_command_test_case,
+     error_test_case].
 
 init_per_suite(Config) ->
     application:ensure_all_started(epp_proxy),
@@ -112,7 +114,7 @@ invalid_command_test_case(Config) ->
     _Data = receive_data(Socket),
     ok = send_data(login_command(), Socket),
     _LoginResponse = receive_data(Socket),
-    PollCommand =
+    InvalidCommand =
         <<"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
           "<epp xmlns=\"https://epp.tld.ee/schema/epp-ee-1.0.xsd\">\n"
           "<command>\n"
@@ -120,8 +122,22 @@ invalid_command_test_case(Config) ->
           "<clTRID>foo bar baz</clTRID>\n"
           "</command>\n"
           "</epp>\n">>,
-    ok = send_data(PollCommand, Socket),
+    ok = send_data(InvalidCommand, Socket),
     {error, closed} = receive_data(Socket),
+    ok.
+
+error_test_case(Config) ->
+    Options = proplists:get_value(ssl_options, Config),
+    {ok, Socket} = ssl:connect("localhost", 1443, Options, 2000),
+    _Data = receive_data(Socket),
+    ok = send_data(login_command(), Socket),
+    _LoginResponse = receive_data(Socket),
+    InvalidXml =
+        <<"</epp>\n">>,
+    ok = send_data(InvalidXml, Socket),
+    ErrorResponse = receive_data(Socket),
+    match_data(ErrorResponse,
+               "Command syntax error."),
     ok.
 
 %% Helper functions:
