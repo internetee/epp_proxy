@@ -103,10 +103,13 @@ Checklist of steps to perform if you want to migrate from mod_epp, but still use
 Testing
 ----
 The application comes with test suite written with common_test. For integration
-tests, there is a small Roda application located in apps/epp_proxy/priv/test_backend_app.
-It has been written with Ruby 2.6.3
+tests, there is a small Roda application located in `apps/epp_proxy/priv/test_backend_app`.
+It has been written with Ruby 2.6.3.
 
-You need to start it before running the test suite. To start it as a deamon,
+There is also a number of generated ssl certificates that are used only for testing. Those are
+valid until 2029 and they are located in `apps/epp_proxy/priv/test_ca`.
+
+You need to start the backend application before running the test suite. To start it as a deamon,
 from the root folder of the project, execute:
 
 ```bash
