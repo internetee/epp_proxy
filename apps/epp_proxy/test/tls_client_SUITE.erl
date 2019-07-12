@@ -6,12 +6,13 @@
 -export([all/0]).
 -export([init_per_suite/1, end_per_suite/1]).
 -export([frame_size_test_case/1,
-         greetings_test_case/1]).
+         greetings_test_case/1,
+         session_test_case/1]).
 
 all() ->
     [frame_size_test_case,
-     greetings_test_case].
-
+     greetings_test_case,
+     session_test_case].
 
 init_per_suite(Config) ->
     application:ensure_all_started(epp_proxy),
@@ -43,6 +44,62 @@ greetings_test_case(Config) ->
     match_data(Data, "<greeting>"),
     ok.
 
+session_test_case(Config) ->
+    Options = proplists:get_value(ssl_options, Config),
+    {ok, Socket} = ssl:connect("localhost", 1443, Options, 2000),
+    _Data = receive_data(Socket),
+    LoginCommand =
+        <<"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+          "<epp xmlns=\"https://epp.tld.ee/schema/epp-ee-1.0.xsd\">\n"
+          "<command>\n"
+          "<login>\n"
+          "<clID>test_bestnames</clID>\n"
+          "<pw>testtest</pw>\n"
+          "<options>\n"
+          "<version>1.0</version>\n"
+          "<lang>en</lang>\n"
+          "</options>\n"
+          "<svcs>\n"
+          "<objURI>https://epp.tld.ee/schema/domain-eis-1.0.xsd</objURI>\n"
+          "<objURI>https://epp.tld.ee/schema/contact-ee-1.1.xsd</objURI>\n"
+          "<objURI>urn:ietf:params:xml:ns:host-1.0</objURI>\n"
+          "<objURI>urn:ietf:params:xml:ns:keyrelay-1.0</objURI>\n"
+          "</svcs>\n"
+          "</login>\n"
+          "</command>\n"
+          "</epp>\n">>,
+    ok = send_data(LoginCommand, Socket),
+    LoginResponse = receive_data(Socket),
+    match_data(LoginResponse, "Command completed successfully"),
+    match_data(LoginResponse, "ccReg-5886259930"),
+    LogoutCommand =
+        <<"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+          "<epp xmlns=\"https://epp.tld.ee/schema/epp-ee-1.0.xsd\">\n"
+          "<command>\n"
+          "<logout>\n"
+          "<clID>test_bestnames</clID>\n"
+          "<pw>testtest</pw>\n"
+          "<options>\n"
+          "<version>1.0</version>\n"
+          "<lang>en</lang>\n"
+          "</options>\n"
+          "<svcs>\n"
+          "<objURI>https://epp.tld.ee/schema/domain-eis-1.0.xsd</objURI>\n"
+          "<objURI>https://epp.tld.ee/schema/contact-ee-1.1.xsd</objURI>\n"
+          "<objURI>urn:ietf:params:xml:ns:host-1.0</objURI>\n"
+          "<objURI>urn:ietf:params:xml:ns:keyrelay-1.0</objURI>\n"
+          "</svcs>\n"
+          "</logout>\n"
+          "</command>\n"
+          "</epp>\n">>,
+    ok = send_data(LogoutCommand, Socket),
+    LogoutResponse = receive_data(Socket),
+    match_data(LogoutResponse,
+               "Command completed successfully; ending session"),
+    %% After receiving logout, connection should be closed.
+    {error, closed} = receive_data(Socket),
+    ok.
+
 %% Helper functions:
 length_of_data(Data) ->
     EPPEnvelope = binary:part(Data, {0, 4}),
@@ -56,11 +113,14 @@ send_data(Message, Socket) ->
     ok = ssl:send(Socket, CompleteMessage).
 
 receive_data(Socket) ->
-    {ok, Data} = ssl:recv(Socket, 0, 1200),
-    EppEnvelope = binary:part(Data, {0, 4}),
-    ReportedLength = binary:decode_unsigned(EppEnvelope, big),
-    binary:part(Data, {byte_size(Data), 4 - ReportedLength}).
+    case ssl:recv(Socket, 0, 1200) of
+        {error, Reason} -> {error, Reason};
+        {ok, Data } ->
+            EppEnvelope = binary:part(Data, {0, 4}),
+            ReportedLength = binary:decode_unsigned(EppEnvelope, big),
+            binary:part(Data, {byte_size(Data), 4 - ReportedLength})
+        end.
 
 match_data(Data, Pattern) ->
     {ok, MatchPattern} = re:compile(Pattern),
-    {match, _Captured} = re:run(Data, Pattern).
+    {match, _Captured} = re:run(Data, MatchPattern).

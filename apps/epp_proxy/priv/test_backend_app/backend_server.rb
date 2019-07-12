@@ -5,8 +5,6 @@ class BackendServer < Roda
 
   route do |r|
     response['Content-Type'] = 'application/xml'
-    random_number = rand(2)
-    @success = random_number == 1
 
     r.on "session" do
       r.get "hello" do
@@ -14,14 +12,11 @@ class BackendServer < Roda
       end
 
       r.post "login" do
-        if @success
-          render("session/login_successful")
-        else
-          render("session/login_failed")
-        end
+        render("session/login")
       end
 
       r.post "logout" do
+        render("session/logout")
       end
     end
 
