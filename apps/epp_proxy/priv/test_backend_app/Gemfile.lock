@@ -1,0 +1,23 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    nio4r (2.4.0)
+    puma (4.0.0)
+      nio4r (~> 2.0)
+    rack (2.0.7)
+    rack-unreloader (1.7.0)
+    roda (3.21.0)
+      rack
+    tilt (2.0.9)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  puma
+  rack-unreloader
+  roda
+  tilt
+
+BUNDLED WITH
+   1.17.2

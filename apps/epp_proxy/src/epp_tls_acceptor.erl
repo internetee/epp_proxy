@@ -68,23 +68,23 @@ create_worker(Socket) ->
 ca_cert_file() ->
     case application:get_env(epp_proxy, cacertfile_path) of
       undefined -> undefined;
-      {ok, CaCertFile} -> CaCertFile
+      {ok, CaCertFile} -> epp_util:path_for_file(CaCertFile)
     end.
 
 cert_file() ->
     case application:get_env(epp_proxy, certfile_path) of
       undefined -> undefined;
-      {ok, CertFile} -> CertFile
+      {ok, CertFile} -> epp_util:path_for_file(CertFile)
     end.
 
 key_file() ->
     case application:get_env(epp_proxy, keyfile_path) of
       undefined -> undefined;
-      {ok, KeyFile} -> KeyFile
+      {ok, KeyFile} -> epp_util:path_for_file(KeyFile)
     end.
 
 crl_file() ->
     case application:get_env(epp_proxy, crlfile_path) of
       undefined -> undefined;
-      {ok, CrlFile} -> CrlFile
+      {ok, CrlFile} -> epp_util:path_for_file(CrlFile)
     end.

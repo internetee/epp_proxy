@@ -54,6 +54,8 @@ WORKDIR /opt/erlang/epp_proxy
 COPY .tool-versions ./
 RUN asdf plugin-add erlang
 RUN asdf install
+RUN asdf plugin-add ruby
+RUN asdf install
 
 RUN curl https://s3.amazonaws.com/rebar3/rebar3 -o /rebar3
 RUN mv /rebar3 /usr/local/bin

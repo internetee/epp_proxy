@@ -77,26 +77,6 @@ request_from_map(#{command := Command,
 			   cookies = [Cookie], headers = Headers,
 			   epp_verb = Command},
     lager:info("Request from map: [~p]~n", [Request]),
-    Request;
-request_from_map(#{command := Command,
-		   session_id := SessionId, raw_frame := RawFrame,
-		   common_name := CommonName, client_cert := ClientCert,
-		   peer_ip := PeerIp, cl_trid := ClTRID}) ->
-    URL = epp_router:route_request(Command),
-    RequestMethod = epp_router:request_method(Command),
-    Cookie = hackney_cookie:setcookie("session", SessionId,
-				      []),
-    Body = request_body(Command, RawFrame, ClTRID),
-    Headers = [{"SSL_CLIENT_CERT", ClientCert},
-	       {"SSL_CLIENT_S_DN_CN", CommonName},
-	       {"User-Agent", <<"EPP proxy">>},
-	       {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}],
-    Request = #epp_request{url = URL,
-			   method = RequestMethod, payload = Body,
-			   cookies = [Cookie], headers = Headers,
-			   epp_verb = Command},
-    lager:info("Unified Request from map: [~p]~n",
-	       [Request]),
     Request.
 
 %% Return form data or an empty list.

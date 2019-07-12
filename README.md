@@ -82,10 +82,10 @@ of Erlang property list.
 | `epp_session_url`    | `https://example.com/epp/session`  | EppSessionRoot        | HTTP address of the session endpoints including schema and port.
 | `epp_command_url`    | `https://example.com/epp/command`  | EppCommandRoot        | HTTP address of the command endpoints including schema and port.
 | `epp_error_url`      | `https://example.com/epp/error`    | EppErrorRoot          | HTTP address of the error endpoints including schema and port.
-| `cacertfile_path`    | `/opt/ca/ca.crt.pem`               | SSLCACertificateFile  | Where is the client root CA located.
-| `certfile_path`      | `/opt/ca/server.crt.pem`           | SSLCertificateFile    | Where is the server certificate located.
-| `keyfile_path`       | `/opt/ca/server.key.pem`           | SSLCertificateKeyFile | Where is the server key located.
-| `crlfile_path`       | `/opt/ca/crl.pem`                  | SSLCARevocationFile   | Where is the CRL file located.
+| `cacertfile_path`    | `/opt/ca/ca.crt.pem`               | SSLCACertificateFile  | Where is the client root CA located. Can be inside apps/epp_proxy/priv or absolute path.
+| `certfile_path`      | `/opt/ca/server.crt.pem`           | SSLCertificateFile    | Where is the server certificate located. Can be inside apps/epp_proxy/priv or absolute path.
+| `keyfile_path`       | `/opt/ca/server.key.pem`           | SSLCertificateKeyFile | Where is the server key located. Can be inside apps/epp_proxy/priv or absolute path.
+| `crlfile_path`       | `/opt/ca/crl.pem`                  | SSLCARevocationFile   | Where is the CRL file located. Can be inside apps/epp_proxy/priv or absolute path.
 
 
 Migrating from mod_epp
@@ -99,6 +99,27 @@ Checklist of steps to perform if you want to migrate from mod_epp, but still use
 4. Set up syslog in `config/sys.config`.
 5. If you do not feel comfortable using Erlang configuration file, you can use command line arguments and flags in format of `/epp_proxy/rel/bin/epp_proxy -epp_proxy tls_port 444`, where `-epp_proxy` is name of application,
    followed by configuration parameter name and value.
+
+Testing
+----
+The application comes with test suite written with common_test. For integration
+tests, there is a small Roda application located in `apps/epp_proxy/priv/test_backend_app`.
+It has been written with Ruby 2.6.3.
+
+There is also a number of generated ssl certificates that are used only for testing. Those are
+valid until 2029 and they are located in `apps/epp_proxy/priv/test_ca`.
+
+You need to start the backend application before running the test suite. To start it as a deamon,
+from the root folder of the project, execute:
+
+```bash
+$ /bin/bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle install"
+$ /bin/bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle exec rackup --pid pidfile -D"
+```
+
+After you finish testing, you can stop the process by reading the stored pid:
+
+    $ kill `cat apps/epp_proxy/priv/test_backend_app/pidfile`
 
 TODO
 ----
