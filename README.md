@@ -1,6 +1,8 @@
 epp_proxy
 =====
 
+[![Build Status](https://travis-ci.org/internetee/epp_proxy.svg?branch=master)](https://travis-ci.org/internetee/epp_proxy)
+
 An application that translates EPP over TCP connection into set of predefined HTTP calls.
 
 Serves as direct replacement for mod_epp (https://github.com/mod-epp/mod-epp), and tries to
