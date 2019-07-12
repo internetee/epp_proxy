@@ -7,12 +7,14 @@
 -export([init_per_suite/1, end_per_suite/1]).
 -export([frame_size_test_case/1,
          greetings_test_case/1,
-         session_test_case/1]).
+         session_test_case/1,
+         command_test_case/1]).
 
 all() ->
     [frame_size_test_case,
      greetings_test_case,
-     session_test_case].
+     session_test_case,
+     command_test_case].
 
 init_per_suite(Config) ->
     application:ensure_all_started(epp_proxy),
@@ -48,27 +50,7 @@ session_test_case(Config) ->
     Options = proplists:get_value(ssl_options, Config),
     {ok, Socket} = ssl:connect("localhost", 1443, Options, 2000),
     _Data = receive_data(Socket),
-    LoginCommand =
-        <<"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
-          "<epp xmlns=\"https://epp.tld.ee/schema/epp-ee-1.0.xsd\">\n"
-          "<command>\n"
-          "<login>\n"
-          "<clID>test_bestnames</clID>\n"
-          "<pw>testtest</pw>\n"
-          "<options>\n"
-          "<version>1.0</version>\n"
-          "<lang>en</lang>\n"
-          "</options>\n"
-          "<svcs>\n"
-          "<objURI>https://epp.tld.ee/schema/domain-eis-1.0.xsd</objURI>\n"
-          "<objURI>https://epp.tld.ee/schema/contact-ee-1.1.xsd</objURI>\n"
-          "<objURI>urn:ietf:params:xml:ns:host-1.0</objURI>\n"
-          "<objURI>urn:ietf:params:xml:ns:keyrelay-1.0</objURI>\n"
-          "</svcs>\n"
-          "</login>\n"
-          "</command>\n"
-          "</epp>\n">>,
-    ok = send_data(LoginCommand, Socket),
+    ok = send_data(login_command(), Socket),
     LoginResponse = receive_data(Socket),
     match_data(LoginResponse, "Command completed successfully"),
     match_data(LoginResponse, "ccReg-5886259930"),
@@ -100,6 +82,26 @@ session_test_case(Config) ->
     {error, closed} = receive_data(Socket),
     ok.
 
+command_test_case(Config) ->
+    Options = proplists:get_value(ssl_options, Config),
+    {ok, Socket} = ssl:connect("localhost", 1443, Options, 2000),
+    _Data = receive_data(Socket),
+    ok = send_data(login_command(), Socket),
+    _LoginResponse = receive_data(Socket),
+    PollCommand =
+        <<"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+          "<epp xmlns=\"https://epp.tld.ee/schema/epp-ee-1.0.xsd\">\n"
+          "<command>\n"
+          "<poll op=\"req\"/>\n"
+          "<clTRID>foo bar baz</clTRID>\n"
+          "</command>\n"
+          "</epp>\n">>,
+    ok = send_data(PollCommand, Socket),
+    PollResponse = receive_data(Socket),
+    match_data(PollResponse,
+               "Command completed successfully; no messages"),
+    ok.
+
 %% Helper functions:
 length_of_data(Data) ->
     EPPEnvelope = binary:part(Data, {0, 4}),
@@ -124,3 +126,24 @@ receive_data(Socket) ->
 match_data(Data, Pattern) ->
     {ok, MatchPattern} = re:compile(Pattern),
     {match, _Captured} = re:run(Data, MatchPattern).
+
+login_command() ->
+    <<"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+      "<epp xmlns=\"https://epp.tld.ee/schema/epp-ee-1.0.xsd\">\n"
+      "<command>\n"
+      "<login>\n"
+      "<clID>test_bestnames</clID>\n"
+      "<pw>testtest</pw>\n"
+      "<options>\n"
+      "<version>1.0</version>\n"
+      "<lang>en</lang>\n"
+      "</options>\n"
+      "<svcs>\n"
+      "<objURI>https://epp.tld.ee/schema/domain-eis-1.0.xsd</objURI>\n"
+      "<objURI>https://epp.tld.ee/schema/contact-ee-1.1.xsd</objURI>\n"
+      "<objURI>urn:ietf:params:xml:ns:host-1.0</objURI>\n"
+      "<objURI>urn:ietf:params:xml:ns:keyrelay-1.0</objURI>\n"
+      "</svcs>\n"
+      "</login>\n"
+      "</command>\n"
+      "</epp>\n">>.

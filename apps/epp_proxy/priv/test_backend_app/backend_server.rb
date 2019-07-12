@@ -21,7 +21,8 @@ class BackendServer < Roda
     end
 
     r.on "command" do
-      r.post "create" do
+      r.post "poll" do
+        render("command/poll")
       end
 
     end
