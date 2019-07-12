@@ -11,7 +11,7 @@ install:
   - "/bin/bash -l -c \"cd apps/epp_proxy/priv/test_backend_app && bundle install\""
 
 script:
-  - "/bin/bash -l -c \"cd apps/epp_proxy/priv/test_backend_app && bundle exec rackup -D\""
+  - "/bin/bash -l -c \"cd apps/epp_proxy/priv/test_backend_app && bundle exec rackup --pid pidfile -D\""
   - "rebar3 as test compile"
   - "DEBUG=1 rebar3 ct --sys_config config/test.config --readable=false --cover --verbose=true"
   - "rebar3 cover --verbose"

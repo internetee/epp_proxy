@@ -1,6 +1,6 @@
 require 'roda'
 
-class BackendServer < Roda
+class EppServer < Roda
   plugin :render
 
   route do |r|

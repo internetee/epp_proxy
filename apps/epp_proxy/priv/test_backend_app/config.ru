@@ -2,7 +2,7 @@
 
 require "rack/unreloader"
 
-Unreloader = Rack::Unreloader.new() { BackendServer }
-Unreloader.require("backend_server.rb") { "BackendServer" }
+Unreloader = Rack::Unreloader.new() { EppServer }
+Unreloader.require("epp_server.rb") { "EppServer" }
 
 run(Unreloader)
