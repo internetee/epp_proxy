@@ -3,13 +3,23 @@
 -include_lib("common_test/include/ct.hrl").
 
 -export([all/0]).
--export([session_id_test_case/1, create_map_test_case/1, create_session_id_test_case/1,
-         frame_length_test_case/1, frame_length_to_receive_test_case/1,
-         frame_length_to_send_test_case/1, readable_ip_test_case/1]).
+-export([session_id_test_case/1,
+         create_map_test_case/1,
+         create_session_id_test_case/1,
+         frame_length_test_case/1,
+         frame_length_to_receive_test_case/1,
+         frame_length_to_send_test_case/1,
+         readable_ip_test_case/1,
+         path_for_file_test_case/1]).
 
-all() -> [session_id_test_case, create_map_test_case, create_session_id_test_case,
-         frame_length_test_case, frame_length_to_receive_test_case,
-         frame_length_to_send_test_case, readable_ip_test_case].
+all() -> [session_id_test_case,
+          create_map_test_case,
+          create_session_id_test_case,
+          frame_length_test_case,
+          frame_length_to_receive_test_case,
+          frame_length_to_send_test_case,
+          readable_ip_test_case,
+          path_for_file_test_case].
 
 %% Todo: these should be property tests, not unit tests.
 session_id_test_case(_Config) ->
@@ -59,4 +69,11 @@ readable_ip_test_case(_Config) ->
     <<"127.0.0.1">> = epp_util:readable_ip({127,0,0,1}),
     {'EXIT', {function_clause, _}}
         = (catch epp_util:readable_ip({127,0,0,1,0})),
+    ok.
+
+path_for_file_test_case(_Config) ->
+    AbsoluteFilename = "/usr/bin",
+    AbsoluteFilename = epp_util:path_for_file(AbsoluteFilename),
+    RelativeFilename = "usr/bin",
+    RelativeFilename =:= epp_util:path_for_file(RelativeFilename),
     ok.
