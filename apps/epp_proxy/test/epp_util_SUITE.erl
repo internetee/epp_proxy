@@ -75,5 +75,5 @@ path_for_file_test_case(_Config) ->
     AbsoluteFilename = "/usr/bin",
     AbsoluteFilename = epp_util:path_for_file(AbsoluteFilename),
     RelativeFilename = "usr/bin",
-    RelativeFilename =:= epp_util:path_for_file(RelativeFilename),
+    true = (AbsoluteFilename =:= epp_util:path_for_file(AbsoluteFilename)),
     ok.

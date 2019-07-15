@@ -9,6 +9,7 @@
          greetings_test_case/1,
          session_test_case/1,
          valid_command_test_case/1,
+         long_message_test_case/1,
          invalid_command_test_case/1,
          error_test_case/1]).
 
@@ -17,6 +18,7 @@ all() ->
      greetings_test_case,
      session_test_case,
      valid_command_test_case,
+     long_message_test_case,
      invalid_command_test_case,
      error_test_case].
 
@@ -101,6 +103,34 @@ valid_command_test_case(Config) ->
           "</command>\n"
           "</epp>\n">>,
     ok = send_data(PollCommand, Socket),
+    PollResponse = receive_data(Socket),
+    match_data(PollResponse,
+               "Command completed successfully; no messages"),
+    ok.
+
+long_message_test_case(Config) ->
+    Options = proplists:get_value(ssl_options, Config),
+    {ok, Socket} = ssl:connect("localhost", 1443, Options, 2000),
+    _Data = receive_data(Socket),
+    CWD = code:priv_dir(epp_proxy),
+    {ok, File} = file:read_file(
+                   filename:join(CWD, "armstrong_thesis_2003.pdf")
+                  ),
+    Base64 = base64:encode(File),
+    CommandBeginning =
+        <<"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+          "<epp xmlns=\"https://epp.tld.ee/schema/epp-ee-1.0.xsd\">\n"
+          "<command>\n"
+          "<poll op=\"req\">\n"
+          "<legalDoc>\n">>,
+    CommandEnd =
+        <<"</legalDoc>\n"
+          "</poll>\n"
+          "<clTRID>foo bar baz</clTRID>\n"
+          "</command>\n"
+          "</epp>\n">>,
+    FullCommand = <<CommandBeginning/binary, Base64/binary, CommandEnd/binary>>,
+    ok = send_data(FullCommand, Socket),
     PollResponse = receive_data(Socket),
     match_data(PollResponse,
                "Command completed successfully; no messages"),

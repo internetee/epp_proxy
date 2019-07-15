@@ -68,6 +68,22 @@ $ rebar3 tar # Creates an archive that can be shipped to another machine
 $ rebar3 as prod release tar # Combines the steps above into single one, uses production profile.
 ```
 
+### Creating Releases
+
+The application is configured to automatically create releases based on git tags. After you develop
+a new functionality, you can create a tag with incremental release:
+
+    $ git tag -a v0.1.10 -m "update tcp handler."
+
+After that, you can run the same relx command to create a tarball with new release:
+
+```sh
+$ rebar3 as prod release tar
+# [Creating the release...]
+===> tarball /opt/erlang/epp_proxy/_build/prod/rel/epp_proxy/epp_proxy-0.1.10+build.1.ref0eb7caa.tar.gz
+     successfully created!
+```
+
 Configuration
 -----
 Configuration for the application tries to emulate the mod_epp configuration as close as possible
