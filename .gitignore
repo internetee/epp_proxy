@@ -19,3 +19,4 @@ rebar3.crashdump
 *~
 
 config/dev.config
+apps/epp_proxy/priv/test_backend_app/pidfile
