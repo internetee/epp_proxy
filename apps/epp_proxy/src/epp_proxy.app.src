@@ -1,5 +1,5 @@
 {application, epp_proxy,
- [{description, "epp_proxy OTP Application"},
+ [{description, "epp_proxy: EPP to HTTP translator"},
   {vsn, "git"},
   {registered, []},
   {mod, {epp_proxy_app, []}},
