@@ -1,5 +1,5 @@
 {application, epp_proxy,
- [{description, "An OTP application"},
+ [{description, "epp_proxy OTP Application"},
   {vsn, "git"},
   {registered, []},
   {mod, {epp_proxy_app, []}},
