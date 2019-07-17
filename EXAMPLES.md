@@ -52,13 +52,6 @@ Logout
   </command>
 </epp>
 
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<epp xmlns="https://epp.tld.ee/schema/epp-ee-1.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd">
-        <command>
-                <logout/>
-        </command>
-</epp>
-
 Poll
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <epp xmlns="https://epp.tld.ee/schema/epp-ee-1.0.xsd">
