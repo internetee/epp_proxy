@@ -28,19 +28,19 @@ The application listens on predefined TCP port for formatted EPP frames and tran
 HTTP requests according to the following matrix. Application performs regex search for clTRID and an
 XPATH search for command name. It does not check against any XSD schema.
 
-| EPP Command | HTTP request                     | Parameters          | Headers                                                             | Payload Type   | Cookies |
-|-------------|----------------------------------|---------------------|---------------------------------------------------------------------|----------------|---------|
-| hello       | `GET /epp_session_url/hello`     |                     |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   |                | session |
-| login       | `POST /epp_session_url/login`    | `raw_frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
-| logout      | `POST /epp_session_url/logout`   | `raw_frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
-| poll        | `POST /epp_command_url/poll`     | `raw_frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
-| check       | `POST /epp_command_url/check`    | `raw_frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
-| info        | `POST /epp_command_url/info`     | `raw_frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
-| create      | `POST /epp_command_url/create`   | `raw_frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
-| delete      | `POST /epp_command_url/delete`   | `raw_frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
-| renew       | `POST /epp_command_url/renew`    | `raw_frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
-| update      | `POST /epp_command_url/update`   | `raw_frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
-| ANY (error) | `GET /epp_error_url`             | `msg, code, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | query params   | session |
+| EPP Command | HTTP request                     | Parameters                 | Headers                                                             | Payload Type   | Cookies |
+|-------------|----------------------------------|----------------------------|---------------------------------------------------------------------|----------------|---------|
+| hello       | `GET /epp_session_url/hello`     |                            |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   |                | session |
+| login       | `POST /epp_session_url/login`    | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
+| logout      | `POST /epp_session_url/logout`   | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
+| poll        | `POST /epp_command_url/poll`     | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
+| check       | `POST /epp_command_url/check`    | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
+| info        | `POST /epp_command_url/info`     | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
+| create      | `POST /epp_command_url/create`   | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
+| delete      | `POST /epp_command_url/delete`   | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
+| renew       | `POST /epp_command_url/renew`    | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
+| update      | `POST /epp_command_url/update`   | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
+| ANY (error) | `GET /epp_error_url`             | `msg, code, clTRID`        |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | query params   | session |
 
 Error route is used in case EPP frame is malformed.
 
