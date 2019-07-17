@@ -16,7 +16,10 @@ class EppServer < Roda
       end
 
       r.post "logout" do
-        render("session/logout")
+        # Additional check if passes empty frame
+        if r.params['frame']
+          render("session/logout")
+        end
       end
     end
 
