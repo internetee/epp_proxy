@@ -1,0 +1,10 @@
+AppInfo = rebar3_appup_utils:find_app_info(<<"epp_proxy">>, STATE),
+"{{vsn}}" = rebar_app_info:original_vsn(AppInfo),
+{"{{vsn}}",
+    [
+     {<<".*">>, [{restart_application, epp_proxy}]}
+    ],
+    [
+     {<<".*">>, [{restart_application, epp_proxy}]}
+    ]
+}.
