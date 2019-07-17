@@ -13,8 +13,7 @@ and lager for logging.
 
 Code style
 ----
-We enforce the style from Erlang's own configuration.
-You can use the rebar3_fmt plugin to do it for you:
+We enforce the style from Erlang's own configuration. You can use the rebar3_fmt plugin to do it for you:
 
     $ rebar3 fmt
 
