@@ -12,8 +12,11 @@
 
 %% Callback API
 request(#epp_request{} = Request) ->
-    HackneyArgs = handle_args(Request),
-    case apply(hackney, request, HackneyArgs) of
+    [Method, URL, Headers, Payload, Options] =
+	handle_args(Request),
+    case hackney:request(Method, URL, Headers, Payload,
+			 Options)
+	of
       {error, Error} -> log_and_return_canned(Error, Request);
       {Status, _StatusCode, _Headers, ClientRef} ->
 	  {ok, Body} = hackney:body(ClientRef), {Status, Body}
