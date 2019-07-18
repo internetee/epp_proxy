@@ -67,20 +67,35 @@ $ rebar3 tar # Creates an archive that can be shipped to another machine
 $ rebar3 as prod release tar # Combines the steps above into single one, uses production profile.
 ```
 
-### Creating Releases
+### Creating and installing Releases
 
 The application is configured to automatically create releases based on git tags. After you develop
-a new functionality, you can create a tag with incremental release:
+a new functionality, you can create a release tag on Github.
 
-    $ git tag -a v0.1.10 -m "update tcp handler."
-
-After that, you can run the same relx command to create a tarball with new release:
+You can then use appup to generate an upgrade path from currently running release to the new one.
+Assuming that a release currently running is v0.1.0, and you want to upgrade to v0.1.1, this is how
+the process looks like:
 
 ```sh
-$ rebar3 as prod release tar
-# [Creating the release...]
-===> tarball /opt/erlang/epp_proxy/_build/prod/rel/epp_proxy/epp_proxy-0.1.10+build.1.ref0eb7caa.tar.gz
-     successfully created!
+$ git checkout tags/v0.1.0 # Check out the older version.
+$ rebar3 as prod release # Create the currently in use release, as it could have been deleted or corrupted in any way.
+$ git checkout tags/v0.1.1
+$ rebar3 as prod do release, appup generate --previous_version 0.1.0, relup, tar # Generate upgrade path, and then package it.
+```
+
+#### Installating
+
+You can copy the archive with 0.1.1 to your target machine(s), and then execute:
+
+```sh
+$ ./bin/epp_proxy install 0.1.1 # Install the new version and marks it as permanent.
+```
+
+From there, you can either upgrade in place or restart into the new release.
+
+```sh
+$ ./bin/epp_proxy upgrade 0.1.1 # Upgrade in place.
+$ ./bin/epp_proxy reboot # Reboot the VM completely into the new permanent release.
 ```
 
 Configuration
