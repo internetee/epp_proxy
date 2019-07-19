@@ -31,7 +31,7 @@ request_builder(Map) -> request_from_map(Map).
 handle_args(#epp_request{method = get, url = URL,
 			 headers = Headers, cookies = Cookies,
 			 epp_verb = ?helloCommand}) ->
-    [get, URL, Headers, "", [{cookie, Cookies}, insecure]];
+    [get, URL, Headers, "", hackney_options(Cookies)];
 %% For error command, we convert the message and code into query parameters,
 %% and append them to the original URL.
 handle_args(#epp_request{method = get, url = URL,
@@ -40,13 +40,13 @@ handle_args(#epp_request{method = get, url = URL,
     QueryString = hackney_url:qs(Payload),
     CompleteURL = [URL, <<"?">>, QueryString],
     [get, CompleteURL, Headers, "",
-     [{cookie, Cookies}, insecure]];
+     hackney_options(Cookies)];
 %% For valid commands, we set the multipart body earlier, now we just pass it on.
 handle_args(#epp_request{method = post, url = URL,
 			 payload = Payload, headers = Headers,
 			 cookies = Cookies}) ->
     [post, URL, Headers, Payload,
-     [{cookie, Cookies}, insecure]].
+     hackney_options(Cookies)].
 
 %% Map request and return values.
 request_from_map(#{command := ?errorCommand,
@@ -81,6 +81,13 @@ request_from_map(#{command := Command,
 			   epp_verb = Command},
     lager:info("Request from map: [~p]~n", [Request]),
     Request.
+
+%% Get hackney options
+hackney_options(Cookies) ->
+    case application:get_env(epp_proxy, insecure) of
+	false -> [{cookies, Cookies}, insecure];
+	_ -> [{cookies, Cookies}]
+	end.
 
 %% Return form data or an empty list.
 request_body(?helloCommand, _, _) -> "";
