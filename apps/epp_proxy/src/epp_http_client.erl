@@ -45,8 +45,7 @@ handle_args(#epp_request{method = get, url = URL,
 handle_args(#epp_request{method = post, url = URL,
 			 payload = Payload, headers = Headers,
 			 cookies = Cookies}) ->
-    [post, URL, Headers, Payload,
-     hackney_options(Cookies)].
+    [post, URL, Headers, Payload, hackney_options(Cookies)].
 
 %% Map request and return values.
 request_from_map(#{command := ?errorCommand,
@@ -85,9 +84,9 @@ request_from_map(#{command := Command,
 %% Get hackney options
 hackney_options(Cookies) ->
     case application:get_env(epp_proxy, insecure) of
-	false -> [{cookies, Cookies}, insecure];
-	_ -> [{cookies, Cookies}]
-	end.
+      false -> [{cookies, Cookies}, insecure];
+      _ -> [{cookies, Cookies}]
+    end.
 
 %% Return form data or an empty list.
 request_body(?helloCommand, _, _) -> "";
