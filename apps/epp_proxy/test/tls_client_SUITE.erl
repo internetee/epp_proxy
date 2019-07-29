@@ -11,7 +11,8 @@
          valid_command_test_case/1,
          long_message_test_case/1,
          invalid_command_test_case/1,
-         error_test_case/1]).
+         error_test_case/1,
+         revoked_cert_test_case/1]).
 
 all() ->
     [frame_size_test_case,
@@ -20,7 +21,8 @@ all() ->
      valid_command_test_case,
      long_message_test_case,
      invalid_command_test_case,
-     error_test_case].
+     error_test_case,
+     revoked_cert_test_case].
 
 init_per_suite(Config) ->
     application:ensure_all_started(epp_proxy),
@@ -30,7 +32,11 @@ init_per_suite(Config) ->
                {certfile, filename:join(CWD, "test_ca/certs/client.crt.pem")},
 	       {keyfile, filename:join(CWD, "test_ca/private/client.key.pem")},
                {active, false}],
-    [{ssl_options, Options} | Config].
+    RevokedOptions = [binary,
+               {certfile, filename:join(CWD, "test_ca/certs/revoked.crt.pem")},
+	       {keyfile, filename:join(CWD, "test_ca/private/revoked.key.pem")},
+               {active, false}],
+    [{ssl_options, Options}, {revoked_options, RevokedOptions} | Config].
 
 end_per_suite(Config) ->
     application:stop(epp_proxy),
@@ -168,6 +174,15 @@ error_test_case(Config) ->
     ErrorResponse = receive_data(Socket),
     match_data(ErrorResponse,
                "Command syntax error."),
+    ok.
+
+revoked_cert_test_case(Config) ->
+    Options = proplists:get_value(revoked_options, Config),
+    {error, Error} = ssl:connect("localhost", 1443, Options, 2000),
+    ct:pal("~p", [Error]),
+    {tls_alert,
+     {certificate_revoked,
+      "received CLIENT ALERT: Fatal - Certificate Revoked"}} = Error,
     ok.
 
 %% Helper functions:
