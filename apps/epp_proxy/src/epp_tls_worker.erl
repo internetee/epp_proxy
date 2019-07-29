@@ -42,7 +42,9 @@ start_link(Socket) ->
 %% Client IP address,
 %% If certificate is revoked, this will fail right away here.
 %% mod_epp does exactly the same thing.
-handle_cast(serve, State = #state{socket = Socket}) ->
+handle_cast(serve,
+	    State = #state{socket = Socket,
+			   session_id = _SessionId}) ->
     {ok, {PeerIp, _PeerPort}} = ssl:peername(Socket),
     case ssl:handshake(Socket) of
       {ok, SecureSocket} ->
