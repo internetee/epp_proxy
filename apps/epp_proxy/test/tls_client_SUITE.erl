@@ -27,8 +27,8 @@ init_per_suite(Config) ->
     application:ensure_all_started(hackney),
     CWD = code:priv_dir(epp_proxy),
     Options = [binary,
-               {certfile, filename:join(CWD, "test_ca/certs/webclient.crt.pem")},
-	       {keyfile, filename:join(CWD, "test_ca/private/webclient.key.pem")},
+               {certfile, filename:join(CWD, "test_ca/certs/client.crt.pem")},
+	       {keyfile, filename:join(CWD, "test_ca/private/client.key.pem")},
                {active, false}],
     [{ssl_options, Options} | Config].
 
