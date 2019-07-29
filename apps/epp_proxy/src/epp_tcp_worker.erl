@@ -18,12 +18,6 @@
 
 -record(state, {socket, session_id, headers}).
 
--define(XMLErrorCode, <<"2001">>).
-
--define(XMLErrorMessage, <<"Command syntax error.">>).
-
--define(DefaultTimeout, 120000).
-
 %% Initialize process
 %% Assign an unique session id that will be passed on to http server as a cookie
 init(Socket) ->
@@ -177,8 +171,15 @@ parse_frame(Frame) ->
     case epp_xml:parse(Frame) of
       {ok, XMLRecord} ->
 	  Command = epp_xml:get_command(XMLRecord),
-	  #valid_frame{command = Command, cl_trid = ClTRID,
-		       raw_frame = Frame};
+	  case epp_router:is_valid_command(Command) of
+	    true ->
+		#valid_frame{command = Command, cl_trid = ClTRID,
+			     raw_frame = Frame};
+	    false ->
+		#invalid_frame{code = ?UnknownCommandErrorCode,
+			       message = ?UnknownCommandErrorMessage,
+			       cl_trid = ClTRID}
+	  end;
       {error, _} ->
 	  #invalid_frame{code = ?XMLErrorCode,
 			 message = ?XMLErrorMessage, cl_trid = ClTRID}
