@@ -179,7 +179,6 @@ error_test_case(Config) ->
 revoked_cert_test_case(Config) ->
     Options = proplists:get_value(revoked_options, Config),
     {error, Error} = ssl:connect("localhost", 1443, Options, 2000),
-    ct:pal("~p", [Error]),
     {tls_alert,
      {certificate_revoked,
       "received CLIENT ALERT: Fatal - Certificate Revoked"}} = Error,

@@ -82,10 +82,12 @@ request_from_map(#{command := Command,
 %% Return form data or an empty list.
 request_body(?helloCommand, _, _) -> "";
 request_body(_Command, RawFrame, nomatch) ->
-    {multipart, [{<<"raw_frame">>, RawFrame}, {<<"frame">>, RawFrame}]};
+    {multipart,
+     [{<<"raw_frame">>, RawFrame}, {<<"frame">>, RawFrame}]};
 request_body(_Command, RawFrame, ClTRID) ->
     {multipart,
-     [{<<"raw_frame">>, RawFrame}, {<<"frame">>, RawFrame}, {<<"clTRID">>, ClTRID}]}.
+     [{<<"raw_frame">>, RawFrame}, {<<"frame">>, RawFrame},
+      {<<"clTRID">>, ClTRID}]}.
 
 %% Return a list of properties that each represent a query part in a query string.
 %% [{"user", "eis"}]} becomes later https://example.com?user=eis
