@@ -11,6 +11,7 @@
          valid_command_test_case/1,
          long_message_test_case/1,
          invalid_command_test_case/1,
+         missing_command_test_case/1,
          error_test_case/1]).
 
 all() ->
@@ -20,6 +21,7 @@ all() ->
      valid_command_test_case,
      long_message_test_case,
      invalid_command_test_case,
+     missing_command_test_case,
      error_test_case].
 
 init_per_suite(Config) ->
@@ -133,8 +135,7 @@ long_message_test_case(Config) ->
                "Command completed successfully; no messages"),
     ok.
 
-%% Sending an invalid command frame should close the connection.
-%% It also crashes the process.
+%% Sending an invalid command frame should return a canned response.
 invalid_command_test_case(Config) ->
     Options = proplists:get_value(tcp_options, Config),
     {ok, Socket} = gen_tcp:connect("localhost", 1180, Options, 2000),
@@ -150,7 +151,26 @@ invalid_command_test_case(Config) ->
           "</command>\n"
           "</epp>\n">>,
     ok = send_data(InvalidCommand, Socket),
-    {error, closed} = receive_data(Socket),
+    ErrorResponse = receive_data(Socket),
+    match_data(ErrorResponse,
+               "Unknown command."),
+    ok.
+
+%% Sending a valid XML without command frame should return a canned response.
+missing_command_test_case(Config) ->
+    Options = proplists:get_value(tcp_options, Config),
+    {ok, Socket} = gen_tcp:connect("localhost", 1180, Options, 2000),
+    _Data = receive_data(Socket),
+    ok = send_data(login_command(), Socket),
+    _LoginResponse = receive_data(Socket),
+    InvalidCommand =
+        <<"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+          "<epp xmlns=\"https://epp.tld.ee/schema/epp-ee-1.0.xsd\">\n"
+          "</epp>\n">>,
+    ok = send_data(InvalidCommand, Socket),
+    ErrorResponse = receive_data(Socket),
+    match_data(ErrorResponse,
+               "Unknown command."),
     ok.
 
 error_test_case(Config) ->

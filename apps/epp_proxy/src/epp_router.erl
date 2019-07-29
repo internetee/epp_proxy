@@ -1,6 +1,7 @@
 -module(epp_router).
 
--export([request_method/1, route_request/1]).
+-export([is_valid_command/1, request_method/1,
+	 route_request/1]).
 
 -define(validCommands,
 	["hello", "login", "logout", "check", "info", "poll",
@@ -9,14 +10,22 @@
 %% 47 is the character code
 -define(forwardSlash, 47).
 
-%% request method: GET for greeting, POST for everything else.
+%% request method: GET for greeting and error, POST for everything else.
 request_method("hello") -> get;
 request_method(<<"hello">>) -> get;
 request_method("error") -> get;
 request_method(<<"error">>) -> get;
 request_method(_) -> post.
 
+is_valid_command(Command) when is_binary(Command) ->
+    CommandAsList = binary_to_list(Command),
+    lists:member(CommandAsList, ?validCommands);
+is_valid_command(Command) when is_list(Command) ->
+    lists:member(Command, ?validCommands);
+is_valid_command(_) -> false.
+
 %% Base router
+route_request(undefined) -> url_map("error");
 route_request(Command) when is_binary(Command) ->
     List = binary_to_list(Command), url_map(List);
 route_request(Command) when is_list(Command) ->

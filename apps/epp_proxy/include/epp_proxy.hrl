@@ -9,3 +9,14 @@
         }).
 
 -type epp_request() :: #epp_request{}.
+
+
+-define(XMLErrorCode, <<"2001">>).
+
+-define(XMLErrorMessage, <<"Command syntax error.">>).
+
+-define(UnknownCommandErrorCode, <<"2000">>).
+
+-define(UnknownCommandErrorMessage, <<"Unknown command.">>).
+
+-define(DefaultTimeout, 120000).
