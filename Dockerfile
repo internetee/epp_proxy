@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y \
   libc-dev \
   perl=* \
   procps=* \
+  inotify-tools=* \
   libssl1.0.0=* \
   perl-base=* \
   && apt-get clean \
