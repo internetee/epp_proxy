@@ -139,7 +139,8 @@ tests, there is a small Roda application located in `apps/epp_proxy/priv/test_ba
 It has been written with Ruby 2.6.3.
 
 There is also a number of generated ssl certificates that are used only for testing. Those are
-valid until 2029 and they are located in `apps/epp_proxy/priv/test_ca`.
+valid until 2029 and they are located in `apps/epp_proxy/priv/test_ca`. The password for test CA
+is `password`.
 
 You need to start the backend application before running the test suite. To start it as a deamon,
 from the root folder of the project, execute:

@@ -43,9 +43,14 @@ start_link(Socket) ->
 %% If certificate is revoked, this will fail right away here.
 %% mod_epp does exactly the same thing.
 handle_cast(serve, State = #state{socket = Socket}) ->
-    {ok, SecureSocket} = ssl:handshake(Socket),
-    NewState = state_from_socket(SecureSocket, State),
-    {noreply, NewState};
+    {ok, {PeerIp, _PeerPort}} = ssl:peername(Socket),
+    case ssl:handshake(Socket) of
+      {ok, SecureSocket} ->
+	  NewState = state_from_socket(SecureSocket, State),
+	  {noreply, NewState};
+      {error, Error} ->
+	  log_on_invalid_handshake(PeerIp, Error)
+    end;
 %% Step two: Using the state of the connection, get the hello route
 %% from http server.  Send the response from HTTP server back to EPP
 %% client.  When this succeeds, send "process_command" to self and
@@ -158,6 +163,13 @@ log_and_exit(State) ->
 
 log_on_timeout(State) ->
     lager:info("Client timed out: [~p]~n", [State]),
+    exit(normal).
+
+log_on_invalid_handshake(Ip, Error) ->
+    ReadableIp = epp_util:readable_ip(Ip),
+    lager:info("Failed SSL handshake. IP: ~s, Error: "
+	       "[~p]~n",
+	       [ReadableIp, Error]),
     exit(normal).
 
 %% Extract state info from socket. Fail if you must.
