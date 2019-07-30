@@ -40,6 +40,7 @@ handle_cast(serve,
 	    State = #state{socket = Socket,
 			   session_id = _SessionId}) ->
     {ok, {PeerIp, _PeerPort}} = ssl:peername(Socket),
+    log_opened_connection(PeerIp),
     case ssl:handshake(Socket) of
       {ok, SecureSocket} ->
 	  NewState = state_from_socket(SecureSocket, State),
@@ -167,6 +168,11 @@ log_on_invalid_handshake(Ip, Error) ->
 	       "[~p]~n",
 	       [ReadableIp, Error]),
     exit(normal).
+
+log_opened_connection(Ip) ->
+    ReadableIp = epp_util:readable_ip(Ip),
+    lager:info("New client connection. IP: ~s, Process: ~p.~n",
+	       [ReadableIp, self()]).
 
 %% Extract state info from socket. Fail if you must.
 state_from_socket(Socket, State) ->
