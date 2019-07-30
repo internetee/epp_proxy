@@ -8,7 +8,9 @@ class EppServer < Roda
 
     r.on "session" do
       r.get "hello" do
-        render("session/hello")
+        if r.cookies['session']
+          render("session/hello")
+        end
       end
 
       r.post "login" do

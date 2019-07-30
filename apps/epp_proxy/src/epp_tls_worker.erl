@@ -12,12 +12,6 @@
 
 -export([code_change/3]).
 
--record(valid_frame, {command, cl_trid, raw_frame}).
-
--record(invalid_frame, {code, cl_trid, message}).
-
--record(state, {socket, session_id, headers}).
-
 %% Initialize process
 %% Assign an unique session id that will be passed on to http server as a cookie
 init(Socket) ->
@@ -171,7 +165,8 @@ log_on_invalid_handshake(Ip, Error) ->
 
 log_opened_connection(Ip) ->
     ReadableIp = epp_util:readable_ip(Ip),
-    lager:info("New client connection. IP: ~s, Process: ~p.~n",
+    lager:info("New client connection. IP: ~s, Process: "
+	       "~p.~n",
 	       [ReadableIp, self()]).
 
 %% Extract state info from socket. Fail if you must.
