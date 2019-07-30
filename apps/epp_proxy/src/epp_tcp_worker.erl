@@ -12,12 +12,6 @@
 
 -export([code_change/3]).
 
--record(valid_frame, {command, cl_trid, raw_frame}).
-
--record(invalid_frame, {code, cl_trid, message}).
-
--record(state, {socket, session_id, headers}).
-
 %% Initialize process
 %% Assign an unique session id that will be passed on to http server as a cookie
 init(Socket) ->

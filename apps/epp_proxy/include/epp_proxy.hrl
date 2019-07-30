@@ -8,8 +8,13 @@
          epp_verb      % Epp verb that is targeted, plus 'error'
         }).
 
--type epp_request() :: #epp_request{}.
+-record(valid_frame, {command, cl_trid, raw_frame}).
 
+-record(invalid_frame, {code, cl_trid, message}).
+
+-record(state, {socket, session_id, headers}).
+
+-type epp_request() :: #epp_request{}.
 
 -define(XMLErrorCode, <<"2001">>).
 
