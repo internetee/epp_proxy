@@ -21,13 +21,12 @@ start_link(Port) ->
 			  []).
 
 init(Port) ->
-    Options = [binary, {packet, raw}, {active, false},
-	       {reuseaddr, true}, {verify, verify_peer}, {depth, 1},
-	       {cacertfile, ca_cert_file()}, {certfile, cert_file()},
-	       {keyfile, key_file()}, {crl_check, peer},
-	       {crl_cache,
-		{ssl_crl_cache, {internal, [{http, 5000}]}}}],
-    ssl_crl_cache:insert({file, crl_file()}),
+    DefaultOptions = [binary, {packet, raw},
+		      {active, false}, {reuseaddr, true},
+		      {verify, verify_peer}, {depth, 1},
+		      {cacertfile, ca_cert_file()}, {certfile, cert_file()},
+		      {keyfile, key_file()}],
+    Options = handle_crl_check_options(DefaultOptions),
     {ok, ListenSocket} = ssl:listen(Port, Options),
     gen_server:cast(self(), accept),
     {ok,
@@ -87,4 +86,17 @@ crl_file() ->
     case application:get_env(epp_proxy, crlfile_path) of
       undefined -> undefined;
       {ok, CrlFile} -> epp_util:path_for_file(CrlFile)
+    end.
+
+%% In some environments, we do not perform a CRL check. Therefore, we need
+%% different options proplist.
+handle_crl_check_options(Options) ->
+    case application:get_env(epp_proxy, crlfile_path) of
+      undefined -> Options;
+      {ok, _CrlFile} ->
+	  ssl_crl_cache:insert({file, crl_file()}),
+	  NewOptions = [{crl_check, peer},
+			{crl_cache, {ssl_crl_cache, {internal, [{http, 5000}]}}}
+			| Options],
+	  NewOptions
     end.
