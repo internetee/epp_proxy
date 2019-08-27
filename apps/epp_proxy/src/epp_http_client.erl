@@ -85,7 +85,7 @@ request_from_map(#{command := Command,
 hackney_options(Cookies) ->
     case application:get_env(epp_proxy, insecure) of
       false -> [{cookie, Cookies}, insecure];
-      _ -> [{cookie, Cookies}]
+      _ -> [{cookie, Cookies}, {connect_timeout, 120000}, {recv_timeout, 120000}]
     end.
 
 %% Return form data or an empty list.
