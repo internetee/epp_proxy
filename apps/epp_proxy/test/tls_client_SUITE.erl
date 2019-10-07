@@ -8,6 +8,7 @@
 -export([frame_size_test_case/1,
          greetings_test_case/1,
          session_test_case/1,
+         simple_hello_test_case/1,
          valid_command_test_case/1,
          long_message_test_case/1,
          invalid_command_test_case/1,
@@ -19,6 +20,7 @@ all() ->
     [frame_size_test_case,
      greetings_test_case,
      session_test_case,
+     simple_hello_test_case,
      valid_command_test_case,
      long_message_test_case,
      invalid_command_test_case,
@@ -58,6 +60,17 @@ greetings_test_case(Config) ->
     {ok, Socket} = ssl:connect("localhost", 1443, Options, 2000),
     Data = receive_data(Socket),
     match_data(Data, "<greeting>"),
+    ok.
+
+simple_hello_test_case(Config) ->
+    Options = proplists:get_value(ssl_options, Config),
+    {ok, Socket} = ssl:connect("localhost", 1443, Options, 2000),
+    _Data = receive_data(Socket),
+    ok = send_data(hello_command(), Socket),
+    HelloResponse = receive_data(Socket),
+    match_data(HelloResponse,
+               "<extURI>urn:ietf:params:xml:ns:secDNS-1.1</extURI>"),
+    match_data(HelloResponse, "https://epp.tld.ee/schema/eis-1.0.xsd"),
     ok.
 
 session_test_case(Config) ->
@@ -228,6 +241,12 @@ receive_data(Socket) ->
 match_data(Data, Pattern) ->
     {ok, MatchPattern} = re:compile(Pattern),
     {match, _Captured} = re:run(Data, MatchPattern).
+
+hello_command() ->
+    <<"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>",
+      "<epp xmlns=\"https://epp.tld.ee/schema/epp-ee-1.0.xsd\">",
+      "<hello/>",
+      "</epp>">>.
 
 login_command() ->
     <<"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"

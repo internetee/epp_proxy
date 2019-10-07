@@ -7,13 +7,21 @@
 %% Get command from an xmlElement. Otherwise return undefined.
 get_command(Record)
     when is_record(Record, xmlElement) ->
+    case xmerl_xpath:string("name(/epp/*[1])", Record) of
+      {xmlObj, string, "hello"} -> "hello";
+      {xmlObj, string, "command"} -> get_command1(Record);
+      {xmlObj, string, []} -> undefined
+    end;
+get_command(_) -> undefined.
+
+get_command1(Record)
+    when is_record(Record, xmlElement) ->
     case xmerl_xpath:string("name(/epp/command/*[1])",
 			    Record)
 	of
       {xmlObj, string, []} -> undefined;
       {xmlObj, string, Command} -> Command
-    end;
-get_command(_) -> undefined.
+    end.
 
 %% xml_erl expects a list of characters, so let's give it to it.
 %% Otherwise return an error tuple.
