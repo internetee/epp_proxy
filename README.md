@@ -38,6 +38,7 @@ XPATH search for command name. It does not check against any XSD schema.
 | create      | `POST /epp_command_url/create`   | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
 | delete      | `POST /epp_command_url/delete`   | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
 | renew       | `POST /epp_command_url/renew`    | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
+| transfer | `POST /epp_command_url/transfer` | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
 | update      | `POST /epp_command_url/update`   | `raw_frame, frame, clTRID` |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | form/multipart | session |
 | ANY (error) | `GET /epp_error_url`             | `msg, code, clTRID`        |  SSL-CLIENT-CERT, SSL-CLIENT-S-DN-CN, User-Agent, X-Forwarded-for   | query params   | session |
 
