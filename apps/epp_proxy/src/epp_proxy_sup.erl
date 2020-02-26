@@ -57,10 +57,14 @@ init([]) ->
     PoolSupervisor = #{id => epp_pool_supervisor,
 		       type => supervisor, modules => [epp_pool_supervisor],
 		       start => {epp_pool_supervisor, start_link, []}},
+    MemoryMonitor = #{id => memory_monitor, type => worker,
+		      modules => [memory_monitor],
+		      start => {memory_monitor, start_link, []}},
+    SharedSpecs = [TLSAcceptor, PoolSupervisor,
+		   MemoryMonitor],
     ChildrenSpec = case ?DevMode of
-		     {ok, true} ->
-			 [TCPAcceptor, TLSAcceptor, PoolSupervisor];
-		     _ -> [TLSAcceptor, PoolSupervisor]
+		     {ok, true} -> [TCPAcceptor | SharedSpecs];
+		     _ -> SharedSpecs
 		   end,
     {ok, {SupFlags, ChildrenSpec}}.
 
