@@ -1,9 +1,7 @@
 -module(epp_xml_SUITE).
 
 -include_lib("common_test/include/ct.hrl").
-
-%% This is required for parse tests.
--include_lib("xmerl/include/xmerl.hrl").
+-include_lib("stdlib/include/assert.hrl").
 
 -define(sampleCommandList,
         "<epp>
@@ -59,24 +57,28 @@ parse_not_a_list_or_binary_test_case(_Config) ->
 
 parse_sample_valid_xml_list_test_case(_Config) ->
     Input = ?sampleCommandList,
-    {ok, Record} = epp_xml:parse(Input),
-    true = is_record(Record, xmlElement),
+    {ok, Result} = epp_xml:parse(Input),
+    ?assertEqual(["epp", "command", "login", "clID", "pw", "clTRID"],
+                 Result),
     ok.
 
 parse_sample_valid_xml_binary_test_case(_Config) ->
     Input = list_to_binary(?sampleCommandList),
-    {ok, Record} = epp_xml:parse(Input),
-    true = is_record(Record, xmlElement),
+    {ok, Result} = epp_xml:parse(Input),
+    ?assertEqual(["epp", "command", "login", "clID", "pw", "clTRID"],
+                 Result),
     ok.
 
 parse_sample_invalid_xml_list_test_case(_Config) ->
     Input = "Some text",
-    {error, {fatal, _Details}} = epp_xml:parse(Input),
+    ExpectedResult = {error, "Malformed: Illegal character in prolog"},
+    ?assertEqual(ExpectedResult, epp_xml:parse(Input)),
     ok.
 
 parse_sample_invalid_xml_binary_test_case(_Config) ->
-    Input = list_to_binary("Some text"),
-    {error, {fatal, _Details}} = epp_xml:parse(Input),
+    Input = <<"</epp>\n">>,
+    ExpectedResult = {error, {badmatch, []}},
+    ?assertEqual(ExpectedResult, epp_xml:parse(Input)),
     ok.
 
 %% find_cltrid
