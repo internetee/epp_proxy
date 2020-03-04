@@ -2,26 +2,24 @@
 
 -export([find_cltrid/1, get_command/1, parse/1]).
 
--include_lib("xmerl/include/xmerl.hrl").
+%% We are only interested in start element of a kind. The list produced
+%% by this will need reversing after it is complete.
+%% This parsing is naive, expects command/hello element to come right
+%% after epp, but this should be everything we need for the purpose.
+-define(PARSER_FUN,
+	fun (Event, Acc) ->
+		case Event of
+		  {startElement, _, Name, _, _} -> [Name | Acc];
+		  _ -> Acc
+		end
+	end).
 
-%% Get command from an xmlElement. Otherwise return undefined.
-get_command(Record)
-    when is_record(Record, xmlElement) ->
-    case xmerl_xpath:string("name(/epp/*[1])", Record) of
-      {xmlObj, string, "hello"} -> "hello";
-      {xmlObj, string, "command"} -> get_command1(Record);
-      {xmlObj, string, []} -> undefined
-    end;
+%% Get command a list of elements found by erlsom.
+%% Otherwise return undefined.
+get_command(["epp", "command", Command | _Rest]) ->
+    Command;
+get_command(["epp", "hello" | _Rest]) -> "hello";
 get_command(_) -> undefined.
-
-get_command1(Record)
-    when is_record(Record, xmlElement) ->
-    case xmerl_xpath:string("name(/epp/command/*[1])",
-			    Record)
-	of
-      {xmlObj, string, []} -> undefined;
-      {xmlObj, string, Command} -> Command
-    end.
 
 %% xml_erl expects a list of characters, so let's give it to it.
 %% Otherwise return an error tuple.
@@ -30,13 +28,14 @@ parse(Text) when is_binary(Text) ->
     List = binary_to_list(Text), parse_list(List);
 parse(_) -> {error, {fatal, {expected_binary_or_list}}}.
 
-%% Parse a record that came from the wire and return a xmlElement record.
 parse_list(List) when is_list(List) ->
-    try xmerl_scan:string(List, [{quiet, true}]) of
-      {Record, []} when is_record(Record, xmlElement) ->
-	  {ok, Record}
+    try erlsom:parse_sax(List, [], ?PARSER_FUN) of
+      {ok, Result, _} ->
+	  ProperResult = lists:reverse(Result), {ok, ProperResult}
     catch
-      exit:X -> {error, X}
+      {error, Error} -> {error, Error};
+      error:Error -> {error, Error};
+      Error -> {error, Error}
     end.
 
 %% The idea is that even when XML command is invalid,

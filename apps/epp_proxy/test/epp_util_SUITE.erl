@@ -74,6 +74,5 @@ readable_ip_test_case(_Config) ->
 path_for_file_test_case(_Config) ->
     AbsoluteFilename = "/usr/bin",
     AbsoluteFilename = epp_util:path_for_file(AbsoluteFilename),
-    RelativeFilename = "usr/bin",
     true = (AbsoluteFilename =:= epp_util:path_for_file(AbsoluteFilename)),
     ok.
