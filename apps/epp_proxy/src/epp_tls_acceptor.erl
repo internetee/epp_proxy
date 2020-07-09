@@ -6,15 +6,17 @@
 
 -define(POOL_SUPERVISOR, epp_pool_supervisor).
 
+-define(THIRTY_MINUTES_IN_MS, 30 * 30 * 1000).
+
 -define(WORKER, epp_tls_worker).
 
 %% gen_server callbacks
 -export([handle_call/3, handle_cast/2, init/1,
-	 start_link/1]).
+	 start_link/1, terminate/2, handle_info/2]).
 
 -export([crl_file/0]).
 
--record(state, {socket, port, options}).
+-record(state, {socket, port, options, timer}).
 
 start_link(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, Port,
@@ -27,11 +29,13 @@ init(Port) ->
 		      {cacertfile, ca_cert_file()}, {certfile, cert_file()},
 		      {keyfile, key_file()}],
     Options = handle_crl_check_options(DefaultOptions),
+    {ok, TimerReference} =
+      timer:send_interval(?THIRTY_MINUTES_IN_MS, reload_clr_file),
     {ok, ListenSocket} = ssl:listen(Port, Options),
     gen_server:cast(self(), accept),
     {ok,
      #state{socket = ListenSocket, port = Port,
-	    options = Options}}.
+	    options = Options, timer = TimerReference}}.
 
 %% Acceptor has only one state that goes in a loop:
 %% 1. Listen for a connection from anyone.
@@ -51,6 +55,19 @@ handle_cast(accept,
     {noreply,
      State#state{socket = ListenSocket, port = Port,
 		 options = Options}}.
+
+handle_info(reload_crl_file, State) ->
+      case crl_file() of
+           undefined -> {noreply, State};
+         {ok, File} ->
+           ssl_crl_cache:insert({file, File}),
+         {noreply, State}
+      end.
+
+terminate(_Reason, State) ->
+    Timer = State#state.timer,
+    timer:cancel(Timer),
+    ok.
 
 handle_call(_E, _From, State) -> {noreply, State}.
 
