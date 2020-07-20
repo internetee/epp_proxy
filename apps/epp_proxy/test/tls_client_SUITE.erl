@@ -215,6 +215,7 @@ revoked_cert_test_case(Config) ->
     {tls_alert,
      {certificate_revoked,
       "received CLIENT ALERT: Fatal - Certificate Revoked"}} = Error,
+%%      "TLS client: In state cipher received SERVER ALERT: Fatal - Certificate Revoked\n "}} = Error,
     ok.
 
 %% Helper functions:

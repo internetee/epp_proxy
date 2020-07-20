@@ -14,9 +14,9 @@
 -export([handle_call/3, handle_cast/2, init/1,
 	 start_link/1, terminate/2, handle_info/2]).
 
--export([crl_file/0]).
+-export([crl_file/0, crl_file/1]).
 
--record(state, {socket, port, options, timer}).
+-record(state, {socket, port, options, timer, crl_path}).
 
 start_link(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, Port,
@@ -35,7 +35,7 @@ init(Port) ->
     gen_server:cast(self(), accept),
     {ok,
      #state{socket = ListenSocket, port = Port,
-	    options = Options, timer = TimerReference}}.
+	    options = Options, timer = TimerReference, crl_path = []}}.
 
 %% Acceptor has only one state that goes in a loop:
 %% 1. Listen for a connection from anyone.
@@ -57,11 +57,22 @@ handle_cast(accept,
 		 options = Options}}.
 
 handle_info(reload_crl_file, State) ->
-      case crl_file() of
-           undefined -> {noreply, State};
-         {ok, File} ->
-           ssl_crl_cache:insert({file, File}),
-         {noreply, State}
+      crl_path = State#state.crl_path,
+      case crl_path of
+      [] ->
+        case crl_file() of
+             undefined -> {noreply, State};
+           {ok, File} ->
+             ssl_crl_cache:insert({file, File}),
+           {noreply, State}
+        end;
+      [_] ->
+        case crl_file(crl_path) of
+          undefined -> {noreply, State};
+          {ok, File} ->
+            ssl_crl_cache:insert({file, File}),
+            {noreply, State}
+        end
       end.
 
 terminate(_Reason, State) ->
@@ -104,6 +115,10 @@ crl_file() ->
       undefined -> undefined;
       {ok, CrlFile} -> epp_util:path_for_file(CrlFile)
     end.
+
+crl_file(path) ->
+    epp_util:path_for_file(path).
+
 
 %% In some environments, we do not perform a CRL check. Therefore, we need
 %% different options proplist.
