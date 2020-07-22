@@ -11,5 +11,12 @@ openssl ca -config openssl.cnf -keyfile private/ca.key.pem -cert certs/ca.crt.pe
 
 openssl ca -config openssl.cnf -keyfile private/ca.key.pem -cert certs/ca.crt.pem -crldays 3650 -gencrl -out crl/crl.pem
 
+openssl genrsa -out private/revoked2.key.pem 4096
+openssl req -sha256 -config openssl.cnf -new -days 3650 -key private/revoked2.key.pem -out csrs/revoked2.csr.pem
+openssl ca -config openssl.cnf -keyfile private/ca.key.pem -cert certs/ca.crt.pem -extensions usr_cert -notext -md sha256 -in csrs/revoked2.csr.pem -days 3650 -out certs/revoked2.crt.pem
+openssl ca -config openssl.cnf -keyfile private/ca.key.pem -cert certs/ca.crt.pem -revoke certs/revoked2.crt.pem
+
+openssl ca -config openssl.cnf -keyfile private/ca.key.pem -cert certs/ca.crt.pem -crldays 3650 -gencrl -out crl/crl2.pem
+
 openssl req -config openssl.cnf -new -sha256 -nodes -out server.csr -newkey rsa:2048 -keyout private/apache.key -config server.csr.cnf
 openssl x509 -req -in server.csr -CA certs/ca.crt.pem  -CAkey private/ca.key.pem -CAcreateserial -out certs/apache.crt -days 3650 -sha256 -extfile v3.ext

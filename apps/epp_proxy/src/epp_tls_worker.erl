@@ -7,7 +7,7 @@
 -include("epp_proxy.hrl").
 
 %% gen_server callbacks
--export([handle_call/3, handle_cast/2, init/1,
+-export([handle_call/3, handle_cast/2, init/1, handle_info/2,
 	 start_link/1]).
 
 -export([code_change/3]).
@@ -56,7 +56,7 @@ handle_cast(greeting,
 						headers => Headers,
 						cl_trid => nomatch}),
     {_Status, Body} = epp_http_client:request(Request),
-    frame_to_socket(Body, Socket),
+    frame_to_socket(Body, Socket, State),
     gen_server:cast(self(), process_command),
     {noreply,
      State#state{socket = Socket, session_id = SessionId}};
@@ -93,7 +93,7 @@ handle_cast(process_command,
 						      cl_trid => ClTRID})
     end,
     {_Status, Body} = epp_http_client:request(Request),
-    frame_to_socket(Body, Socket),
+    frame_to_socket(Body, Socket, State),
     %% On logout, close the socket.
     %% Else, go back to the beginning of the loop.
     if Command =:= "logout" ->
@@ -109,16 +109,25 @@ handle_cast(process_command,
 
 handle_call(_E, _From, State) -> {noreply, State}.
 
+handle_info(ssl_closed, State) ->
+	{stop, normal, State};
+handle_info(_Info, State) ->
+	{noreply, State}.
+
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 %% Wrap a message in EPP frame, and then send it to socket.
-frame_to_socket(Message, Socket) ->
+frame_to_socket(Message, Socket, State) ->
     Length = epp_util:frame_length_to_send(Message),
     ByteSize = <<Length:32/big>>,
     CompleteMessage = <<ByteSize/binary, Message/binary>>,
-    write_line(Socket, CompleteMessage).
+    write_line(Socket, CompleteMessage, State).
 
-write_line(Socket, Line) -> ok = ssl:send(Socket, Line).
+write_line(Socket, Line, State) ->
+	case ssl:send(Socket, Line) of
+		ok -> ok;
+		{error, closed} -> {stop, normal, State}
+	end.
 
 frame_from_socket(Socket, State) ->
     case ssl:recv(Socket, 0, ?DefaultTimeout) of
