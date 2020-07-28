@@ -33,6 +33,7 @@ all() ->
 init_per_suite(Config) ->
     application:ensure_all_started(epp_proxy),
     application:ensure_all_started(hackney),
+  ok = application:set_env(epp_proxy, crlfile_path, "test_ca/crl/first"),
     CWD = code:priv_dir(epp_proxy),
     Options = [binary,
                {certfile, filename:join(CWD, "test_ca/certs/client.crt.pem")},
@@ -121,14 +122,15 @@ session_test_case(Config) ->
 second_revoked_session_test_case(Config) ->
   ok = application:set_env(epp_proxy, crlfile_path, "test_ca/crl/second"),
 
-  epp_tls_acceptor ! reload_crl_file,
-
+  epp_tls_monitor ! reload_acceptor,
+  ct:sleep({seconds, 5}),
   Options = proplists:get_value(second_revoked_options, Config),
 
   {error, Error} = ssl:connect("localhost", 1443, Options, 2000),
   {tls_alert,
     {certificate_revoked,
       "received CLIENT ALERT: Fatal - Certificate Revoked"}} = Error,
+%%        "TLS client: In state cipher received SERVER ALERT: Fatal - Certificate Revoked\n "}} = Error,
   ok.
 
 valid_command_test_case(Config) ->

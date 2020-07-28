@@ -6,17 +6,15 @@
 
 -define(POOL_SUPERVISOR, epp_pool_supervisor).
 
--define(THIRTY_MINUTES_IN_MS, 30 * 30 * 1000).
-
 -define(WORKER, epp_tls_worker).
 
 %% gen_server callbacks
 -export([handle_call/3, handle_cast/2, init/1,
-	 start_link/1, terminate/2, handle_info/1, handle_info/2]).
+	 start_link/1, terminate/2]).
 
--export([crl_file/0, crl_file/1]).
+-export([crl_file/0]).
 
--record(state, {socket, port, options, timer}).
+-record(state, {socket, port, options}).
 
 start_link(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, Port,
@@ -29,12 +27,11 @@ init(Port) ->
 		      {cacertfile, ca_cert_file()}, {certfile, cert_file()},
 		      {keyfile, key_file()}],
     Options = handle_crl_check_options(DefaultOptions),
-    TimerReference = erlang:send_after(?THIRTY_MINUTES_IN_MS, self(), reload_clr_file),
     {ok, ListenSocket} = ssl:listen(Port, Options),
     gen_server:cast(self(), accept),
     {ok,
      #state{socket = ListenSocket, port = Port,
-	    options = Options, timer = TimerReference}}.
+	    options = Options}}.
 
 %% Acceptor has only one state that goes in a loop:
 %% 1. Listen for a connection from anyone.
@@ -55,35 +52,7 @@ handle_cast(accept,
      State#state{socket = ListenSocket, port = Port,
 		 options = Options}}.
 
-handle_info(reload_crl_file) ->
-  case crl_file() of
-    undefined -> {noreply};
-    {ok, File} ->
-      ssl_crl_cache:insert({file, File}),
-      {noreply}
-  end.
-
-handle_info(reload_crl_file, State = #state{socket = ListenSocket, port = Port,
-  options = _Options, timer = TimerReference}) ->
-  _ = erlang:cancel_timer(TimerReference, [{async, true}, {info, false}]),
-  TRef = erlang:send_after(?THIRTY_MINUTES_IN_MS, self(), reload_clr_file),
-  DefaultOptions = [binary, {packet, raw},
-    {active, false}, {reuseaddr, true},
-    {verify, verify_peer}, {depth, 1},
-    {cacertfile, ca_cert_file()}, {certfile, cert_file()},
-    {keyfile, key_file()}],
-  NewOptions = handle_crl_check_options(DefaultOptions),
-  ok = ssl:close(ListenSocket),
-  {ok, NewSocket} = ssl:listen(Port, NewOptions),
-  gen_server:cast(self(), accept),
-  {noreply, State#state{socket = NewSocket, port = Port,
-    options = NewOptions, timer = TRef}};
-handle_info(_Info, State) ->
-  {noreply, State}.
-
-terminate(_Reason, State) ->
-    Timer = State#state.timer,
-    _ = erlang:cancel_timer(Timer, [{async, true}, {info, false}]),
+terminate(_Reason, _State) ->
     ok.
 
 handle_call(_E, _From, State) -> {noreply, State}.
@@ -121,9 +90,6 @@ crl_file() ->
       undefined -> undefined;
       {ok, CrlFile} -> epp_util:path_for_file(CrlFile)
     end.
-
-crl_file(path) ->
-    epp_util:path_for_file(path).
 
 
 %% In some environments, we do not perform a CRL check. Therefore, we need

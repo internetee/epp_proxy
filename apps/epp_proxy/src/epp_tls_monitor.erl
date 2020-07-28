@@ -1,25 +1,23 @@
 %%%-------------------------------------------------------------------
 %%% @doc
 %%%
+%%% Monitor module for reloading epp_tls_acceptor on runtime
+%%% Used to renew CRLs once in 30 minutes
 %%% @end
 %%% Created: 20 Feb 2020
 %%%-------------------------------------------------------------------
--module(memory_monitor).
+-module(epp_tls_monitor).
 
 -behaviour(gen_server).
 
--define(TEN_MINUTES_IN_MS, 10 * 30 * 1000).
-
--define(THIRTY_MINUTES_IN_MS, 30 * 30 * 1000).
-
--define(ONE_HOUR_IN_MS, 60 * 60 * 1000).
+-define(THIRTY_MINUTES_IN_MS, 30 * 60 * 1000).
 
 -export([init/1, start_link/0]).
 
 -export([code_change/3, handle_call/3, handle_cast/2,
-	 handle_info/2, terminate/2]).
+  handle_info/2, terminate/2]).
 
--export([log_memory/0]).
+-export([reload_acceptor/0]).
 
 -record(state, {timer_ref  :: timer:tref()}).
 
@@ -28,38 +26,38 @@
 -spec start_link() -> ignore | {error, _} | {ok, pid()}.
 
 start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [],
-			  []).
+  gen_server:start_link({local, ?MODULE}, ?MODULE, [],
+    []).
 
 -spec init([]) -> {ok, state()}.
 
 init([]) ->
-  TimerReference = erlang:send_after(?THIRTY_MINUTES_IN_MS, self(), log_usage),
-    erlang:send(self(), log_usage),
-    {ok, #state{timer_ref = TimerReference}}.
+  TimerReference = erlang:send_after(?THIRTY_MINUTES_IN_MS, self(), reload_acceptor),
+  erlang:send(self(), reload_acceptor),
+  {ok, #state{timer_ref = TimerReference}}.
 
 %%%-------------------------------------------------------------------
 %%% GenServer callbacks
 %%%-------------------------------------------------------------------
 -spec handle_call(_, _, State) -> {stop,
-				   not_implemented, State}.
+  not_implemented, State}.
 
 handle_call(_M, _F, State) ->
-    {stop, not_implemented, State}.
+  {stop, not_implemented, State}.
 
 -spec handle_cast(_, State) -> {stop, not_implemented,
-				State}.
+  State}.
 
 handle_cast(_M, State) ->
-    {stop, not_implemented, State}.
+  {stop, not_implemented, State}.
 
--spec handle_info(log_usage, _) -> {noreply, _}.
+-spec handle_info(reload_acceptor, _) -> {noreply, _}.
 
-handle_info(log_usage, State = #state{timer_ref = TimerReference}) ->
+handle_info(reload_acceptor, State = #state{timer_ref = TimerReference}) ->
   _ = erlang:cancel_timer(TimerReference, [{async, true}, {info, false}]),
   TRef = erlang:send_after(?THIRTY_MINUTES_IN_MS, self(), reload_clr_file),
-    ok = log_memory(),
-   {noreply, State#state{timer_ref = TRef}}.
+  ok = reload_acceptor(),
+  {noreply, State#state{timer_ref = TRef}}.
 
 -spec terminate(_, state()) -> ok.
 
@@ -74,25 +72,7 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %%%-------------------------------------------------------------------
 %%% Internal functions
 %%%-------------------------------------------------------------------
-log_memory() ->
-    Mem = erlang:memory(),
-    Values = lists:map(fun ({Name, Value}) ->
-			       List = io_lib:format("~s: ~s",
-						    [Name,
-						     human_filesize(Value)]),
-			       binary:list_to_bin(List)
-		       end,
-		       Mem),
-    Values,
-    lager:info("EPP proxy memory usage ~s.",
-	       [lists:join(", ", Values)]).
-
-human_filesize(Size) ->
-    human_filesize(Size,
-		   ["B", "KB", "MB", "GB", "TB", "PB"]).
-
-human_filesize(S, [_ | [_ | _] = L]) when S >= 1024 ->
-    human_filesize(S / 1024, L);
-human_filesize(S, [M | _]) ->
-    List = io_lib:format("~.2f ~s", [float(S), M]),
-    binary:list_to_bin(List).
+reload_acceptor() ->
+  supervisor:terminate_child(epp_proxy_sup, epp_tls_acceptor),
+  supervisor:restart_child(epp_proxy_sup, epp_tls_acceptor),
+  ok.
