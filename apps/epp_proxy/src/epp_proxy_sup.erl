@@ -60,8 +60,11 @@ init([]) ->
     MemoryMonitor = #{id => memory_monitor, type => worker,
 		      modules => [memory_monitor],
 		      start => {memory_monitor, start_link, []}},
+		TLSMonitor = #{id => epp_tls_monitor, type => worker,
+			modules => [epp_tls_monitor],
+			start => {epp_tls_monitor, start_link, []}},
     SharedSpecs = [TLSAcceptor, PoolSupervisor,
-		   MemoryMonitor],
+		   MemoryMonitor, TLSMonitor],
     ChildrenSpec = case ?DevMode of
 		     {ok, true} -> [TCPAcceptor | SharedSpecs];
 		     _ -> SharedSpecs

@@ -10,7 +10,7 @@
 
 %% gen_server callbacks
 -export([handle_call/3, handle_cast/2, init/1,
-	 start_link/1]).
+	 start_link/1, terminate/2]).
 
 -export([crl_file/0]).
 
@@ -52,6 +52,9 @@ handle_cast(accept,
      State#state{socket = ListenSocket, port = Port,
 		 options = Options}}.
 
+terminate(_Reason, _State) ->
+    ok.
+
 handle_call(_E, _From, State) -> {noreply, State}.
 
 %% Create a worker process. These are short lived and should not be restarted,
@@ -88,15 +91,15 @@ crl_file() ->
       {ok, CrlFile} -> epp_util:path_for_file(CrlFile)
     end.
 
+
 %% In some environments, we do not perform a CRL check. Therefore, we need
 %% different options proplist.
 handle_crl_check_options(Options) ->
     case application:get_env(epp_proxy, crlfile_path) of
       undefined -> Options;
-      {ok, _CrlFile} ->
-	  ssl_crl_cache:insert({file, crl_file()}),
+      {ok, CrlFile} ->
 	  NewOptions = [{crl_check, peer},
-			{crl_cache, {ssl_crl_cache, {internal, [{http, 5000}]}}}
+			{crl_cache, {ssl_crl_hash_dir, {internal, [{dir, epp_util:path_for_file(CrlFile)}]}}}
 			| Options],
 	  NewOptions
     end.

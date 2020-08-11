@@ -14,7 +14,8 @@
          invalid_command_test_case/1,
          missing_command_test_case/1,
          error_test_case/1,
-         revoked_cert_test_case/1]).
+         revoked_cert_test_case/1,
+         second_revoked_session_test_case/1]).
 
 all() ->
     [frame_size_test_case,
@@ -26,11 +27,13 @@ all() ->
      invalid_command_test_case,
      missing_command_test_case,
      error_test_case,
-     revoked_cert_test_case].
+     revoked_cert_test_case,
+     second_revoked_session_test_case].
 
 init_per_suite(Config) ->
     application:ensure_all_started(epp_proxy),
     application:ensure_all_started(hackney),
+  ok = application:set_env(epp_proxy, crlfile_path, "test_ca/crl/first"),
     CWD = code:priv_dir(epp_proxy),
     Options = [binary,
                {certfile, filename:join(CWD, "test_ca/certs/client.crt.pem")},
@@ -40,7 +43,12 @@ init_per_suite(Config) ->
                {certfile, filename:join(CWD, "test_ca/certs/revoked.crt.pem")},
 	       {keyfile, filename:join(CWD, "test_ca/private/revoked.key.pem")},
                {active, false}],
-    [{ssl_options, Options}, {revoked_options, RevokedOptions} | Config].
+  SecondRevokedOptions = [binary,
+    {certfile, filename:join(CWD, "test_ca/certs/revoked2.crt.pem")},
+    {keyfile, filename:join(CWD, "test_ca/private/revoked2.key.pem")},
+    {active, false}],
+    [{ssl_options, Options}, {revoked_options, RevokedOptions},
+      {second_revoked_options, SecondRevokedOptions} | Config].
 
 end_per_suite(Config) ->
     application:stop(epp_proxy),
@@ -108,6 +116,22 @@ session_test_case(Config) ->
     %% After receiving logout, connection should be closed.
     {error, closed} = receive_data(Socket),
     ok.
+
+
+
+second_revoked_session_test_case(Config) ->
+  ok = application:set_env(epp_proxy, crlfile_path, "test_ca/crl/second"),
+
+  epp_tls_monitor ! reload_acceptor,
+  ct:sleep({seconds, 5}),
+  Options = proplists:get_value(second_revoked_options, Config),
+
+  {error, Error} = ssl:connect("localhost", 1443, Options, 2000),
+  {tls_alert,
+    {certificate_revoked,
+      "received CLIENT ALERT: Fatal - Certificate Revoked"}} = Error,
+%%        "TLS client: In state cipher received SERVER ALERT: Fatal - Certificate Revoked\n "}} = Error,
+  ok.
 
 valid_command_test_case(Config) ->
     Options = proplists:get_value(ssl_options, Config),
@@ -215,6 +239,7 @@ revoked_cert_test_case(Config) ->
     {tls_alert,
      {certificate_revoked,
       "received CLIENT ALERT: Fatal - Certificate Revoked"}} = Error,
+%%      "TLS client: In state cipher received SERVER ALERT: Fatal - Certificate Revoked\n "}} = Error,
     ok.
 
 %% Helper functions:

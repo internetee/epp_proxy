@@ -118,7 +118,8 @@ of Erlang property list.
 | `cacertfile_path`    | `/opt/ca/ca.crt.pem`               | SSLCACertificateFile  | Where is the client root CA located. Can be inside apps/epp_proxy/priv or absolute path.
 | `certfile_path`      | `/opt/ca/server.crt.pem`           | SSLCertificateFile    | Where is the server certificate located. Can be inside apps/epp_proxy/priv or absolute path.
 | `keyfile_path`       | `/opt/ca/server.key.pem`           | SSLCertificateKeyFile | Where is the server key located. Can be inside apps/epp_proxy/priv or absolute path.
-| `crlfile_path`       | `/opt/ca/crl.pem`                  | SSLCARevocationFile   | Where is the CRL file located. Can be inside apps/epp_proxy/priv or absolute path. When not set, not CRL check is performed.
+| `crlfile_path`       | `/opt/ca/crl`                      | SSLCARevocationFile   | Where is the CRL file located. Can be inside apps/epp_proxy/priv or absolute path. When not set, not CRL check is performed. CLRs in this directory must be rehashed by `c_rehash` command as per this solution (https://stackoverflow.com/posts/51480191/revisions) 
+
 
 
 Migrating from mod_epp
