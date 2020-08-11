@@ -1,17 +1,14 @@
-FROM debian:wheezy
+FROM debian:buster-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 COPY ./docker/apt/sources.list /etc/apt/
 
-RUN apt-get update && apt-get -t wheezy install -y -qq wget \
+RUN apt-get update && apt-get -t buster install -y -qq wget \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-COPY ./docker/apt/frexian.list /etc/apt/sources.list.d/
 
-RUN wget http://deb.freexian.com/extended-lts/pool/main/f/freexian-archive-keyring/freexian-archive-keyring_2018.05.29_all.deb && dpkg -i freexian-archive-keyring_2018.05.29_all.deb
-
-RUN apt-get update && apt-get -t wheezy-backports install -y -qq git \
+RUN apt-get update && apt-get -t buster-backports install -y -qq git \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -25,15 +22,15 @@ RUN apt-get update && apt-get install -y \
   libssl-dev=* \
   libreadline-dev=* \
   libdpkg-perl=* \
-  perl-modules=* \
   liberror-perl=* \
   libc6=* \
   libc-dev \
   perl=* \
   procps=* \
   inotify-tools=* \
-  libssl1.0.0=* \
+  libssl1.1=* \
   perl-base=* \
+  zlib1g-dev \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
