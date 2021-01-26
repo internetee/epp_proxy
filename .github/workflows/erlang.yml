@@ -1,0 +1,38 @@
+name: Erlang CI
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: OTP ${{matrix.otp}}
+    strategy:
+      matrix:
+        otp: [21.3.8]
+        ruby: [2.6.3]
+    steps:
+      - uses: actions/checkout@v2.0.0
+      - uses: gleam-lang/setup-erlang@v1.1.2
+        with:
+          otp-version: ${{matrix.otp}}
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+
+      - name: Install rebar dependencies
+        run: rebar3 as test get-deps
+
+      - name: Integrated Ruby app setup
+        run: |
+          rebar3 as test get-deps
+          /bin/bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle install"
+
+      - name: Run tests
+        run: |
+          /bin/bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle exec rackup --pid pidfile -D"
+          rebar3 as test compile
+          DEBUG=1 rebar3 ct --sys_config config/test.config --readable=false --cover --verbose=true
+          rebar3 cover --verbose
+
+#      - run: rebar3 eunit
