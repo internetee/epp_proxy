@@ -72,6 +72,8 @@ handle_cast(process_command,
       #invalid_frame{message = Message, code = Code,
 		     cl_trid = ClTRID} ->
 	  Command = "error",
+	  lager:error("The following frame is erroneous: [~p]~n",
+		      [RawFrame]),
 	  Request = epp_http_client:request_builder(#{command =>
 							  Command,
 						      session_id => SessionId,
@@ -161,6 +163,8 @@ log_on_timeout(State) ->
 %% Get status, XML record, command and clTRID if defined.
 %% Otherwise return an invalid frame with predefined error message and code.
 parse_frame(Frame) ->
+    lager:info("Got the following frame to parse: [~p]~n",
+	       [Frame]),
     ClTRID = epp_xml:find_cltrid(Frame),
     case epp_xml:parse(Frame) of
       {ok, XMLRecord} ->
