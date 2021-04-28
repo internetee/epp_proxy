@@ -13,8 +13,7 @@
          long_message_test_case/1,
          invalid_command_test_case/1,
          missing_command_test_case/1,
-         error_test_case/1,
-         revoked_cert_test_case/1]).
+         error_test_case/1]).
 
 all() ->
     [frame_size_test_case,
@@ -25,8 +24,7 @@ all() ->
      long_message_test_case,
      invalid_command_test_case,
      missing_command_test_case,
-     error_test_case,
-     revoked_cert_test_case].
+     error_test_case].
 
 init_per_suite(Config) ->
     application:ensure_all_started(epp_proxy),
@@ -207,14 +205,6 @@ error_test_case(Config) ->
     ErrorResponse = receive_data(Socket),
     match_data(ErrorResponse,
                "Command syntax error."),
-    ok.
-
-revoked_cert_test_case(Config) ->
-    Options = proplists:get_value(revoked_options, Config),
-    {error, Error} = ssl:connect("localhost", 1443, Options, 2000),
-    {tls_alert,
-     {certificate_revoked,
-      "received CLIENT ALERT: Fatal - Certificate Revoked"}} = Error,
     ok.
 
 %% Helper functions:
