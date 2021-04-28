@@ -8,7 +8,7 @@ jobs:
     name: OTP ${{matrix.otp}}
     strategy:
       matrix:
-        otp: [21.3.8]
+        otp: [21.3.8.17]
         ruby: [2.6.3]
     steps:
       - uses: actions/checkout@v2.0.0
