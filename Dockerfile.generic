@@ -1,0 +1,46 @@
+FROM debian:buster-slim
+LABEL org.opencontainers.image.source=https://github.com/internetee/epp_proxy
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+COPY ./docker/apt/sources.list /etc/apt/
+
+RUN apt-get update && apt-get install -y \
+  wget \
+  git \
+  build-essential=* \
+  libncurses5-dev=* \
+  automake=* \
+  autoconf=* \
+  curl=* \
+  ca-certificates=* \
+  libssl-dev=* \
+  libreadline-dev=* \
+  libdpkg-perl=* \
+  liberror-perl=* \
+  libc6=* \
+  libc-dev \
+  perl=* \
+  procps=* \
+  inotify-tools=* \
+  libssl1.1=* \
+  perl-base=* \
+  zlib1g-dev \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN git clone https://github.com/asdf-vm/asdf.git "$HOME"/.asdf && \
+    echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.bashrc && \
+        echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.profile
+
+ENV PATH="${PATH}:/root/.asdf/shims:/root/.asdf/bin"
+
+RUN mkdir -p /opt/erlang/epp_proxy
+WORKDIR /opt/erlang/epp_proxy
+
+COPY . .
+RUN asdf plugin-add erlang
+RUN asdf install
+RUN asdf global erlang $(grep erlang .tool-versions | cut -d' ' -f2)
+RUN asdf plugin-add ruby
+RUN asdf plugin-add rebar
+RUN asdf install
