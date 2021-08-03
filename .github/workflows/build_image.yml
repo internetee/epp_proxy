@@ -1,0 +1,45 @@
+name: build and push image
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+
+      - uses: actions/checkout@v2
+
+      - name: Set image tag
+        run: |
+          LATEST_GIT_TAG=$(git describe --tags --abbrev=0)
+          echo "TAG=ghcr.io/internetee/epp_proxy:$LATEST_GIT_TAG" >> $GITHUB_ENV
+
+      - name: Build image
+        env:
+          KEY_BASE: ${{ secrets.KEY_BASE}}
+        run: |
+          docker build -t $TAG -f Dockerfile.generic .
+
+      - name: Push image to gh container registry
+        env:
+          PASSWORD: ${{ secrets.GHCR }}
+        run: |
+          echo $PASSWORD | docker login ghcr.io -u eisbot --password-stdin
+          docker push $TAG
+
+      - name: Notify developers
+        timeout-minutes: 1
+        env:
+          NOTIFICATION_URL: ${{ secrets.NOTIFICATION_URL}}
+        run: |
+          curl -i -X POST --data-urlencode 'payload={
+            "text": "##### Build of epp proxy image has been succesful :tada:\n
+            Run: docker pull '$TAG'
+            "
+            }' $NOTIFICATION_URL
