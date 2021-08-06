@@ -44,3 +44,5 @@ RUN asdf global erlang $(grep erlang .tool-versions | cut -d' ' -f2)
 RUN asdf plugin-add ruby
 RUN asdf plugin-add rebar
 RUN asdf install
+
+RUN rebar3 release
