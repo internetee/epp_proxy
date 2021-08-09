@@ -34,7 +34,7 @@ RUN git clone https://github.com/asdf-vm/asdf.git "$HOME"/.asdf && \
 
 ENV PATH="${PATH}:/root/.asdf/shims:/root/.asdf/bin"
 
-RUN mkdir -p /opt/erlang/epp_proxy
+RUN mkdir -p /opt/erlang/epp_proxy/release
 WORKDIR /opt/erlang/epp_proxy
 
 COPY . .
@@ -45,4 +45,5 @@ RUN asdf plugin-add ruby
 RUN asdf plugin-add rebar
 RUN asdf install
 
-RUN rebar3 release
+RUN rebar3 as prod do release tar
+RUN tar -xf _build/prod/rel/epp_proxy/epp_proxy-0.1.11.tar.gz -C release

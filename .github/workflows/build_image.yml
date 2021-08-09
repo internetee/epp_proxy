@@ -20,6 +20,12 @@ jobs:
           LATEST_GIT_TAG=$(git describe --tags --abbrev=0)
           echo "TAG=ghcr.io/internetee/epp_proxy:$LATEST_GIT_TAG" >> $GITHUB_ENV
 
+      - name: Set config
+        env:
+          SYSCONF: ${{ secrets.SYSCONF }}
+        run: |
+          echo $SYSCONF | base64 -di > config/sys.config
+
       - name: Build image
         env:
           KEY_BASE: ${{ secrets.KEY_BASE}}
