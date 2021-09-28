@@ -1,0 +1,13 @@
+FROM internetee/erlang-ruby:21.3.8-2.6.3 AS build
+COPY . ./scr/
+
+WORKDIR /opt/erlang/epp_proxy/scr
+
+RUN rebar3 as prod release
+
+FROM internetee/erlang-ruby:21.3.8-2.6.3
+LABEL org.opencontainers.image.source=https://github.com/internetee/epp_proxy
+
+
+COPY --from=build /opt/erlang/epp_proxy/scr/_build/prod/rel/epp_proxy ./release
+RUN ln -s /opt/erlang/epp_proxy/release/bin/epp_proxy ./epp_proxy
