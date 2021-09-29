@@ -20,7 +20,7 @@ jobs:
         run: |
           git clone https://github.com/erlang/otp.git
           cd otp
-          git checkout OTP 21.3.8.17
+          git checkout OTP-21.3.8.17
           ./otp_build autoconf
           ./configure
           make
