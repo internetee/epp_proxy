@@ -1,5 +1,4 @@
 FROM debian:buster-slim
-# TODO move me to Docker images repo
 
 RUN apt-get update && apt-get install -y \
   wget \
