@@ -20,7 +20,7 @@ jobs:
         run: |
           curl -O https://raw.githubusercontent.com/kerl/kerl/master/kerl
           chmod +x kerl
-          kerl build ${{matrix.otp}}
+          ./kerl build ${{matrix.otp}}
           erlang --version
       
       - uses: ruby/setup-ruby@v1
