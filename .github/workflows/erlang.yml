@@ -16,8 +16,13 @@ jobs:
       #   with:
       #     otp-version: ${{matrix.otp}}
 
-      - name: Erlang version
-        run: erlang --version
+      - name: Setup erlang 
+        run: |
+          apt-get -y update
+          apt-get -y install erlang=21.3.8
+          erlang --version
+
+      
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
