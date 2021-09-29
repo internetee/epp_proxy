@@ -20,6 +20,9 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
+      - name: Rebar version
+        run: rebar3 --version
+        
       - name: Install rebar dependencies
         run: rebar3 as test get-deps
 
