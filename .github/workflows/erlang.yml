@@ -24,7 +24,9 @@ jobs:
         run: wget https://s3.amazonaws.com/rebar3/rebar3 && chmod +x rebar3
 
       - name: Rebar version
-        run: ./rebar3 --version
+        run: |
+         ls -l
+         ./rebar3 --version
 
       - name: Install rebar dependencies
         run: ./rebar3 as test get-deps
