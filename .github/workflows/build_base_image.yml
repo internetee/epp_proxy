@@ -1,0 +1,38 @@
+name: build and push image
+
+on:
+  push:
+    paths:
+    - .tool-versions
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Set image tag
+      run: |
+        IFS=$'\n' read -d '' -r -a lines < .tool-versions
+        erlang_line="${lines[0]}"
+        ruby_line="${lines[1]}"
+        erlang=(${erlang_line// / })
+        ruby=(${ruby_line// / })
+        ERLANG_VER=${erlang[1]}
+        RUBY_VER=${ruby[1]}
+        echo "TAG=internetee/erlang-ruby:'$ERLANG_VER'-'$RUBY_VER'" >> $GITHUB_ENV
+
+    - name: Build image
+      run: |
+        docker build -t $TAG -f Dockerfile.Erlang-ruby.base .
+
+    - name: Push image to Docker hub
+      env:
+        D_HUB_PASS: ${{ secrets.D_HUB_PASS}}
+      run: |
+        echo $D_HUB_PASS | docker login -u eiskra --password-stdin
+        docker push $TAG
