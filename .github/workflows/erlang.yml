@@ -5,26 +5,40 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: OTP ${{matrix.otp}}
-    strategy:
-      matrix:
-        otp: [21.3.8.17]
-        ruby: [2.6.3]
+    # name: OTP ${{matrix.otp}}
+    # strategy:
+    #   matrix:
+    #     otp: [21.3.8.17]
+    #     ruby: [2.6.3]
+    # steps:
+    #   - uses: actions/checkout@v2.0.0
+    #   - uses: gleam-lang/setup-erlang@v1.1.2
+    #     with:
+    #       otp-version: ${{matrix.otp}}
+    #   - uses: ruby/setup-ruby@v1
+    #     with:
+    #       ruby-version: ${{ matrix.ruby }}
+    #       bundler-cache: true # runs 'bundle install' and caches installed gems automatically
     steps:
-      - uses: actions/checkout@v2.0.0
-      - uses: gleam-lang/setup-erlang@v1.1.2
-        with:
-          otp-version: ${{matrix.otp}}
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-
-      - name: Get rebar3
+      - name: setup
         run: |
-          git clone https://github.com/erlang/rebar3.git
-          cd rebar3
-          ./bootstrap
+          git clone https://github.com/asdf-vm/asdf.git "$HOME"/.asdf && \
+          echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.bashrc && \
+          echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.profile
+          export PATH="${PATH}:/root/.asdf/shims:/root/.asdf/bin"
+
+          asdf plugin-add erlang
+          asdf install
+          asdf global erlang $(grep erlang .tool-versions | cut -d' ' -f2)
+          asdf plugin-add ruby
+          asdf plugin-add rebar
+          asdf install
+
+      # - name: Get rebar3
+      #   run: |
+      #     git clone https://github.com/erlang/rebar3.git
+      #     cd rebar3
+      #     ./bootstrap
 
       - name: Rebar version
         run: |
