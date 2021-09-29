@@ -18,9 +18,13 @@ jobs:
 
       - name: Setup erlang 
         run: |
-          curl -O https://raw.githubusercontent.com/kerl/kerl/master/kerl
-          chmod +x kerl
-          ./kerl build ${{matrix.otp}}
+          git clone https://github.com/erlang/otp.git
+          cd otp
+          git checkout OTP 21.3.8.17
+          ./otp_build autoconf
+          ./configure
+          make
+          make install
           erlang --version
       
       - uses: ruby/setup-ruby@v1
