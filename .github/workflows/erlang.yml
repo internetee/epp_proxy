@@ -22,8 +22,8 @@ jobs:
     steps:
       - name: setup
         run: |
-          git clone https://github.com/asdf-vm/asdf.git "$HOME"/.asdf
-          echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.bashrc
+          git clone https://github.com/asdf-vm/asdf.git "$HOME"/.asdf && \
+          echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.bashrc && \
           echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.profile
           export PATH="${PATH}:/root/.asdf/shims:/root/.asdf/bin"
 
