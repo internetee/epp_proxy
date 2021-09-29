@@ -21,27 +21,29 @@ jobs:
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
       - name: Get rebar3
-        run: wget https://s3.amazonaws.com/rebar3/rebar3 && chmod +x rebar3
+        run: |
+          git clone https://github.com/erlang/rebar3.git
+          cd rebar3
+          ./bootstrap
 
       - name: Rebar version
         run: |
          ls -l
-         ./rebar3 local upgrade
-         ./rebar3 --version
+         rebar3 --version
 
       - name: Install rebar dependencies
-        run: ./rebar3 as test get-deps
+        run: rebar3 as test get-deps
 
       - name: Integrated Ruby app setup
         run: |
-          ./rebar3 as test get-deps
+          rebar3 as test get-deps
           /bin/bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle install"
 
       - name: Run tests
         run: |
           /bin/bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle exec rackup --pid pidfile -D"
-          ./rebar3 as test compile
+          rebar3 as test compile
           DEBUG=1 rebar3 ct --sys_config config/test.config --readable=false --cover --verbose=true
-          ./rebar3 cover --verbose
+          rebar3 cover --verbose
 
 #      - run: rebar3 eunit
