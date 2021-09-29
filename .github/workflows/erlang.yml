@@ -12,9 +12,12 @@ jobs:
         ruby: [2.6.3]
     steps:
       - uses: actions/checkout@v2.0.0
-      - uses: gleam-lang/setup-erlang@v1.1.2
-        with:
-          otp-version: ${{matrix.otp}}
+      # - uses: gleam-lang/setup-erlang@v1.1.2
+      #   with:
+      #     otp-version: ${{matrix.otp}}
+
+      - name: Erlang version
+        run: erlang --version
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
