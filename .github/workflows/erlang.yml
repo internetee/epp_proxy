@@ -18,10 +18,10 @@ jobs:
 
       - name: Setup erlang 
         run: |
-          apt-get -y update
-          apt-get -y install erlang=21.3.8
+          curl -O https://raw.githubusercontent.com/kerl/kerl/master/kerl
+          chmod +x kerl
+          kerl build ${{matrix.otp}}
           erlang --version
-
       
       - uses: ruby/setup-ruby@v1
         with:
