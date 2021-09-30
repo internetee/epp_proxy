@@ -18,7 +18,8 @@ jobs:
     - name: Set image tag
       run: |
         IFS=$'\n' read -d '' -r -a lines < .tool-versions && erlang_line="${lines[0]}" && ruby_line="${lines[1]}"
-        echo $lines
+        echo $erlang_line
+        echo $ruby_line
         echo 'HERE 1'
         erlang=(${erlang_line// / })
         echo $erlang
