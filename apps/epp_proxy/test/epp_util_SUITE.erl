@@ -66,7 +66,7 @@ frame_length_to_send_test_case(_Config) ->
     ok.
 
 readable_ip_test_case(_Config) ->
-    <<"127.0.0.999">> = epp_util:readable_ip({127,0,0,1}),
+    <<"127.0.0.1">> = epp_util:readable_ip({127,0,0,1}),
     {'EXIT', {function_clause, _}}
         = (catch epp_util:readable_ip({127,0,0,1,0})),
     ok.
