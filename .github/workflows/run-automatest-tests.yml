@@ -15,10 +15,10 @@ jobs:
         run: docker run -d --name tester proxy-tester
       
       - name: Install rebar dependencies
-        run: docker exec -i tester 'rebar3 as test get-deps'
+        run: docker exec -i tester rebar3 as test get-deps
 
       - name: Integrated Ruby app setup
-        run: docker exec -i tester 'apps/epp_proxy/priv/test_backend_app && bundle install && bundle exec rackup'
+        run: docker exec -i tester apps/epp_proxy/priv/test_backend_app && bundle install && bundle exec rackup
 
       - name: Compile for tests
-        run: docker exec -i tester 'rebar3 as test compile'
+        run: docker exec -i tester rebar3 as test compile
