@@ -20,10 +20,12 @@ jobs:
         IFS=$'\n' read -d '' -r -a lines < .tool-versions && erlang_line="${lines[0]}" && ruby_line="${lines[1]}"
         echo 'HERE 1'
         erlang=(${erlang_line// / })
+        echo $erlang
         echo 'HERE 2'
         ruby=(${ruby_line// / })
         ERLANG_VER=${erlang[1]}
         RUBY_VER=${ruby[1]}
+        echo $ERLANG_VER
         echo "TAG=internetee/erlang-ruby:'$ERLANG_VER'-'$RUBY_VER'" >> $GITHUB_ENV
 
     - name: Build image
