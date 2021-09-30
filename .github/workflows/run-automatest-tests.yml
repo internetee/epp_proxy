@@ -1,0 +1,33 @@
+name: Proxy automated tests
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.0.0
+
+      - name: Build image for tests
+        run: docker build -t proxy-tester -f Dockerfile.test . 
+
+      - name: Start the container
+        run: docker run -d --name tester proxy-tester
+      
+      - name: Install rebar dependencies
+        run: docker exec -i tester rebar3 as test get-deps
+
+      - name: Integrated Ruby app setup
+        run: docker exec -d tester bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle install && bundle exec rackup"
+
+      - name: Compile for tests
+        run: |
+          sleep 15
+          docker exec -i tester rebar3 as test compile
+
+      - name: Run tests
+        run: |
+          docker exec -i -e DEBUG=1 tester rebar3 ct --sys_config config/test.config --readable=false --cover --verbose=true 
+          
+      - name: Show test coverage
+        run: docker exec -i tester rebar3 cover --verbose
