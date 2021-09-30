@@ -22,7 +22,7 @@ jobs:
 
       - name: Compile for tests
         run: |
-          sleep 15
+          sleep 35
           docker exec -i tester rebar3 as test compile
 
       - name: Run tests
