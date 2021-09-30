@@ -38,8 +38,7 @@ jobs:
       
     - name: Set image tag"
       run: |
-        TAG = `cat TAG`
-        echo "TAG=internetee/erlang-ruby:'$ERLANG_VER'-'$RUBY_VER'" >> $GITHUB_ENV
+        echo "TAG=`cat TAG`" >> $GITHUB_ENV
 
     - name: Build image
       run: |
