@@ -18,7 +18,13 @@ jobs:
         run: docker exec -i tester rebar3 as test get-deps
 
       - name: Integrated Ruby app setup
-        run: docker exec -i tester bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle install && bundle exec rackup"
+        run: docker exec tester bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle install && bundle exec rackup"
 
       - name: Compile for tests
-        run: docker exec -i tester rebar3 as test compile
+        run: |
+          sleep 15
+          docker exec -i tester rebar3 as test compile
+
+      - name: Run tests
+        run: |
+          docker exec -i tester DEBUG=1 rebar3 ct --sys_config config/test.config --readable=false --cover --verbose=true && rebar3 cover --verbose
