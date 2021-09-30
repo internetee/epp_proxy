@@ -27,4 +27,4 @@ jobs:
 
       - name: Run tests
         run: |
-          docker exec -i tester DEBUG=1 rebar3 ct --sys_config config/test.config --readable=false --cover --verbose=true && rebar3 cover --verbose
+          docker exec -i -e DEBUG=1 tester rebar3 ct --sys_config config/test.config --readable=false --cover --verbose=true && rebar3 cover --verbose
