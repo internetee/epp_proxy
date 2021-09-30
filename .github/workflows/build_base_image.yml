@@ -23,8 +23,8 @@ jobs:
         try:
             with open(".tool-versions", "r") as f:
                 for line in f:
-                (key, val) = line.split()
-                versions[key] = val
+                    (key, val) = line.split()
+                    versions[key] = val
         except:
             print("Something is not right")
         print("internetee/erlang-ruby:" + versions["erlang"] + "-" + versions["ruby"])
