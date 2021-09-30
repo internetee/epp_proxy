@@ -15,7 +15,7 @@ jobs:
 
     - uses: actions/checkout@v2
 
-    - name: Set image tag
+    - name: Get versions
       shell: python
       run: |
         import os
@@ -26,10 +26,20 @@ jobs:
                     (key, val) = line.split()
                     versions[key] = val
         except:
-            print("Something is not right")
-        print("internetee/erlang-ruby:" + versions["erlang"] + "-" + versions["ruby"])
-        print(os.environ)
-        #echo "TAG=internetee/erlang-ruby:'$ERLANG_VER'-'$RUBY_VER'" >> $GITHUB_ENV
+            print("Something is off with getting the versions")
+        tag = "internetee/erlang-ruby:" + versions["erlang"] + "-" + versions["ruby"]
+        try:
+            f = open("TAG", "x")
+            f.write(tag)
+        except:
+            print("Something is not right with setting the tag")
+        finally:
+          f.close()
+      
+    - name: Set image tag"
+      run: |
+        TAG = `cat TAG`
+        echo "TAG=internetee/erlang-ruby:'$ERLANG_VER'-'$RUBY_VER'" >> $GITHUB_ENV
 
     - name: Build image
       run: |
