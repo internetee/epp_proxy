@@ -1,9 +1,9 @@
 name: build and push image
 
-on: [push]
-  # push:
-  #   paths:
-  #   - .tool-versions
+on:
+  push:
+    paths:
+    - .tool-versions
 
 jobs:
 
