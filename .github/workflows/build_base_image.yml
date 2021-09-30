@@ -28,7 +28,7 @@ jobs:
         except:
             print("Something is not right")
         print("internetee/erlang-ruby:" + versions["erlang"] + "-" + versions["ruby"])
-        print(os.environ["GITHUB_ENV"])
+        print(os.environ)
         #echo "TAG=internetee/erlang-ruby:'$ERLANG_VER'-'$RUBY_VER'" >> $GITHUB_ENV
 
     - name: Build image
