@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y \
 # USER asdf
 # WORKDIR /asdf
 
-RUN git clone https://github.com/asdf-vm/asdf.git "$HOME"/.asdf && \
+RUN git clone https://github.com/asdf-vm/asdf.git --branch v0.6.3 "$HOME"/.asdf && \
     echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.bashrc && \
         echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.profile
 
