@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/asdf-vm/asdf.git --branch 1886e00cf18f5e9d3c5ac1bd18426d04121d4472 "$HOME"/.asdf && \
+RUN git clone https://github.com/asdf-vm/asdf.git --branch v0.6.3 "$HOME"/.asdf && \
     echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.bashrc && \
         echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.profile
 
