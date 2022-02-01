@@ -1,0 +1,52 @@
+name: build and push image
+
+on:
+  push:
+    paths:
+    - .tool-versions
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Get versions
+      shell: python
+      run: |
+        import os
+        versions = {}
+        try:
+            with open(".tool-versions", "r") as f:
+                for line in f:
+                    (key, val) = line.split()
+                    versions[key] = val
+        except:
+            print("Something is off with getting the versions")
+        tag = "internetee/erlang-ruby:" + versions["erlang"] + "-" + versions["ruby"]
+        try:
+            f = open("TAG", "x")
+            f.write(tag)
+        except:
+            print("Something is not right with setting the tag")
+        finally:
+          f.close()
+      
+    - name: Set image tag"
+      run: |
+        echo "TAG=`cat TAG`" >> $GITHUB_ENV
+
+    - name: Build image
+      run: |
+        docker build -t $TAG -f Dockerfile.Erlang-ruby.base .
+
+    - name: Push image to Docker hub
+      env:
+        D_HUB_PASS: ${{ secrets.D_HUB_PASS}}
+      run: |
+        echo $D_HUB_PASS | docker login -u eiskra --password-stdin
+        docker push $TAG

@@ -1,0 +1,4 @@
+FROM internetee/erlang-ruby:21.3.8-2.6.3
+COPY . .
+
+CMD ["tail", "-f" , "/dev/null"]
