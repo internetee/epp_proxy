@@ -172,7 +172,8 @@ log_opened_connection(Ip) ->
 require_client_certs() ->
     case application:get_env(epp_proxy, require_client_certs) of
         {ok, false} -> false;
-        {ok, true} -> true
+        {ok, true} -> true;
+	_ -> true
     end.
 
 %% Extract state info from socket. Fail if you must.
