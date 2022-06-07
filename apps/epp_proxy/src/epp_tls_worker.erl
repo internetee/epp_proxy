@@ -169,20 +169,32 @@ log_opened_connection(Ip) ->
 	       "~p.~n",
 	       [ReadableIp, self()]).
 
+require_client_certs() ->
+    case application:get_env(epp_proxy, require_client_certs) of
+        {ok, false} -> false;
+        {ok, true} -> true
+    end.
+
 %% Extract state info from socket. Fail if you must.
 state_from_socket(Socket, State) ->
-    {ok, PeerCert} = ssl:peercert(Socket),
     {ok, {PeerIp, _PeerPort}} = ssl:peername(Socket),
-    {SSL_CLIENT_S_DN_CN, SSL_CLIENT_CERT} =
-	epp_certs:headers_from_cert(PeerCert),
-    Headers = [{"SSL-CLIENT-CERT", SSL_CLIENT_CERT},
-	       {"SSL-CLIENT-S-DN-CN", SSL_CLIENT_S_DN_CN},
-	       {"User-Agent", <<"EPP proxy">>},
-	       {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}],
+    PlainHeaders = [
+        {"User-Agent", <<"EPP proxy">>},
+        {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}],
+    case {ssl:peercert(Socket), require_client_certs()} of
+        {{error, no_peercert}, false} -> Headers = PlainHeaders;
+        % {{error, no_peercert}, true} -> ; %% TODO: maybe send the reason of connection close
+        {{ok, PeerCert}, _} ->
+        {SSL_CLIENT_S_DN_CN, SSL_CLIENT_CERT} =
+        epp_certs:headers_from_cert(PeerCert),
+        Headers = lists:append(PlainHeaders, [
+            {"SSL-CLIENT-CERT", SSL_CLIENT_CERT},
+            {"SSL-CLIENT-S-DN-CN", SSL_CLIENT_S_DN_CN}])
+    end,
     NewState = State#state{socket = Socket,
-			   headers = Headers},
+        headers = Headers},
     lager:info("Established connection with: [~p]~n",
-	       [NewState]),
+        [NewState]),
     NewState.
 
 %% Get status, XML record, command and clTRID if defined.
