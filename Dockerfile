@@ -3,7 +3,7 @@ FROM debian:buster-slim
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 COPY ./docker/apt/sources.list /etc/apt/
 
-RUN apt-get update && apt-get -t buster install -y -qq wget \
+RUN apt-get update && apt-get install -y -qq wget \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
