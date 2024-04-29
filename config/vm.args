@@ -5,16 +5,3 @@
 +K true
 +A30
 
--proto_dist inet6_tls
--ssl_dist_opt server_certfile "/opt/ca/certs/cert.pem"
--ssl_dist_opt server_secure_renegotiate true
--ssl_dist_opt client_secure_renegotiate true
-
--proto_dist inet6_tls
--ssl_dist_opt server_certfile "/opt/ca/certs/cert.pem"
--ssl_dist_opt server_keyfile "/opt/ca/private/key.pem"
--ssl_dist_opt cacertfile "/opt/ca/certs/ca.crt.pem"
--ssl_dist_opt verify 1
--ssl_dist_opt fail_if_no_peer_cert true
--ssl_dist_opt server_secure_renegotiate true
--ssl_dist_opt client_secure_renegotiate true
