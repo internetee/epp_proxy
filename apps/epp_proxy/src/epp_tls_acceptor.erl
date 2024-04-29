@@ -25,13 +25,14 @@ init(Port) ->
 		      {active, false}, {reuseaddr, true},
 		      {verify, verify_peer}, {depth, 1},
 		      {cacertfile, ca_cert_file()}, {certfile, cert_file()},
-		      {keyfile, key_file()}],
+		      {keyfile, key_file()}, inet6],
     Options = handle_crl_check_options(DefaultOptions),
     {ok, ListenSocket} = ssl:listen(Port, Options),
     gen_server:cast(self(), accept),
     {ok,
      #state{socket = ListenSocket, port = Port,
 	    options = Options}}.
+
 
 %% Acceptor has only one state that goes in a loop:
 %% 1. Listen for a connection from anyone.

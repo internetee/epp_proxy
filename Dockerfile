@@ -31,6 +31,8 @@ RUN apt-get update && apt-get install -y \
   libssl1.1=* \
   perl-base=* \
   zlib1g-dev \
+  net-tools \
+  iproute2 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
