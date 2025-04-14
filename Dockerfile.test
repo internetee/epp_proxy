@@ -1,0 +1,71 @@
+FROM debian:bullseye-slim
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Install all dependencies in a single layer to reduce image size
+RUN apt-get update && apt-get install -y -qq \
+  wget \
+  git \
+  build-essential \
+  libncurses5-dev \
+  automake \
+  autoconf \
+  curl \
+  ca-certificates \
+  libssl-dev \
+  libreadline-dev \
+  libdpkg-perl \
+  liberror-perl \
+  libc6 \
+  libc-dev \
+  perl \
+  procps \
+  inotify-tools \
+  libssl1.1 \
+  perl-base \
+  zlib1g-dev \
+  # Additional dependencies for Erlang build
+  libncurses-dev \
+  libsctp-dev \
+  # Documentation tools to prevent build failures
+  xsltproc \
+  libxml2-utils \
+  # Dependencies for Ruby
+  libffi-dev \
+  libyaml-dev \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for Erlang build
+ENV KERL_CONFIGURE_OPTIONS="--disable-debug --without-javac --without-wx --without-odbc --disable-hipe --without-jinterface --without-docs"
+ENV KERL_BUILD_DOCS="no"
+ENV KERL_DOC_TARGETS=""
+ENV KERL_INSTALL_HTMLDOCS="no"
+ENV KERL_INSTALL_MANPAGES="no"
+
+# Install asdf version manager
+RUN git clone https://github.com/asdf-vm/asdf.git --branch v0.6.3 "$HOME"/.asdf && \
+    echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.bashrc && \
+    echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.profile
+
+ENV PATH="${PATH}:/root/.asdf/shims:/root/.asdf/bin"
+
+WORKDIR /app
+
+# Copy tool versions and install required plugins
+COPY .tool-versions ./
+RUN . $HOME/.asdf/asdf.sh && \
+    asdf plugin-add erlang && \
+    asdf plugin-add ruby && \
+    asdf plugin-add rebar && \
+    asdf install
+
+# Copy the application code
+COPY . .
+
+# Make sure asdf is loaded in non-interactive shells
+RUN echo '. $HOME/.asdf/asdf.sh' > /etc/profile.d/asdf.sh && \
+    chmod +x /etc/profile.d/asdf.sh
+
+# Keep container running for tests
+CMD ["tail", "-f", "/dev/null"]
