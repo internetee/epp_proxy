@@ -137,7 +137,7 @@ Testing
 ----
 The application comes with test suite written with common_test. For integration
 tests, there is a small Roda application located in `apps/epp_proxy/priv/test_backend_app`.
-It has been written with Ruby 2.6.3.
+It has been written with Ruby 3.2.2.
 
 There is also a number of generated ssl certificates that are used only for testing. Those are
 valid until 2029 and they are located in `apps/epp_proxy/priv/test_ca`. The password for test CA
@@ -149,6 +149,24 @@ from the root folder of the project, execute:
 ```bash
 $ /bin/bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle install"
 $ /bin/bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle exec rackup --pid pidfile -D"
+```
+
+The easiest way to run tests is using Docker:
+
+```bash
+# Run all tests
+docker compose run --rm epp_proxy bash -c "cd /opt/erlang/epp_proxy && rebar3 ct"
+
+# Run a specific test suite
+docker compose run --rm epp_proxy bash -c "cd /opt/erlang/epp_proxy && rebar3 ct --suite apps/epp_proxy/test/epp_http_client_SUITE"
+
+# Start a shell for debugging
+docker compose run --rm epp_proxy bash -c "cd /opt/erlang/epp_proxy && rebar3 shell"
+
+# Then in the Erlang shell:
+application:get_all_env(epp_proxy).
+# To exit the shell:
+halt().
 ```
 
 After you finish testing, you can stop the process by reading the stored pid:
