@@ -21,12 +21,14 @@
 -define(TCPPort,
 	case application:get_env(epp_proxy, tcp_port) of
 	  undefined -> undefined;
+	  {ok, Value} when is_list(Value) -> list_to_integer(Value);
 	  {ok, Value} -> Value
 	end).
 
 -define(TLSPort,
 	case application:get_env(epp_proxy, tls_port) of
 	  undefined -> undefined;
+	  {ok, Val} when is_list(Val) -> list_to_integer(Val);
 	  {ok, Val} -> Val
 	end).
 

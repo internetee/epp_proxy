@@ -33,14 +33,31 @@ start_link(Socket) ->
 handle_cast(serve,
 	    State = #state{socket = Socket,
 			   session_id = _SessionId}) ->
-    {ok, {PeerIp, _PeerPort}} = ssl:peername(Socket),
-    log_opened_connection(PeerIp),
-    case ssl:handshake(Socket) of
-      {ok, SecureSocket} ->
-	  NewState = state_from_socket(SecureSocket, State),
-	  {noreply, NewState};
-      {error, Error} ->
-	  log_on_invalid_handshake(PeerIp, Error)
+    try
+        % Check if we have a valid socket
+        case ssl:peername(Socket) of
+            {ok, {PeerIp, _PeerPort}} ->
+                log_opened_connection(PeerIp),
+                % Try to perform the handshake
+                case ssl:handshake(Socket) of
+                    {ok, SecureSocket} ->
+                        NewState = state_from_socket(SecureSocket, State),
+                        {noreply, NewState};
+                    {error, notsup_on_transport_accept_socket} ->
+                        lager:error("Socket not supported for TLS handshake. This may indicate the socket is not an SSL socket or was improperly initialized."),
+                        {stop, normal, State};
+                    {error, HandshakeError} ->
+                        log_on_invalid_handshake(PeerIp, HandshakeError),
+                        {stop, normal, State}
+                end;
+            {error, PeerError} ->
+                lager:error("Invalid socket: cannot get peer information: ~p", [PeerError]),
+                {stop, normal, State}
+        end
+    catch
+        error:CatchError:Stacktrace ->
+            lager:error("Exception during TLS handshake: ~p~nStacktrace: ~p", [CatchError, Stacktrace]),
+            {stop, normal, State}
     end;
 %% Step two: Using the state of the connection, get the hello route
 %% from http server.  Send the response from HTTP server back to EPP
@@ -171,14 +188,26 @@ log_opened_connection(Ip) ->
 
 %% Extract state info from socket. Fail if you must.
 state_from_socket(Socket, State) ->
-    {ok, PeerCert} = ssl:peercert(Socket),
     {ok, {PeerIp, _PeerPort}} = ssl:peername(Socket),
-    {SSL_CLIENT_S_DN_CN, SSL_CLIENT_CERT} =
-	epp_certs:headers_from_cert(PeerCert),
-    Headers = [{"SSL-CLIENT-CERT", SSL_CLIENT_CERT},
-	       {"SSL-CLIENT-S-DN-CN", SSL_CLIENT_S_DN_CN},
-	       {"User-Agent", <<"EPP proxy">>},
-	       {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}],
+    Headers = case ssl:peercert(Socket) of
+        {ok, PeerCert} ->
+            try
+                {SSL_CLIENT_S_DN_CN, SSL_CLIENT_CERT} = epp_certs:headers_from_cert(PeerCert),
+                [{"SSL-CLIENT-CERT", SSL_CLIENT_CERT},
+                 {"SSL-CLIENT-S-DN-CN", SSL_CLIENT_S_DN_CN},
+                 {"User-Agent", <<"EPP proxy">>},
+                 {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}]
+            catch
+                _:_ ->
+                    lager:warning("Could not extract certificate information from client at IP: ~s", [epp_util:readable_ip(PeerIp)]),
+                    [{"User-Agent", <<"EPP proxy">>},
+                     {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}]
+            end;
+        {error, _} ->
+            lager:info("No client certificate provided from IP: ~s", [epp_util:readable_ip(PeerIp)]),
+            [{"User-Agent", <<"EPP proxy">>},
+             {"X-Forwarded-for", epp_util:readable_ip(PeerIp)}]
+    end,
     NewState = State#state{socket = Socket,
 			   headers = Headers},
     lager:info("Established connection with: [~p]~n",

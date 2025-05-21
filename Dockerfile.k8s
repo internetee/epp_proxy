@@ -1,0 +1,105 @@
+FROM debian:bullseye-slim AS build
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+COPY ./docker/apt/sources.list /etc/apt/
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y -qq \
+  wget \
+  git \
+  build-essential \
+  libncurses5-dev \
+  automake \
+  autoconf \
+  curl \
+  ca-certificates \
+  libssl-dev \
+  libreadline-dev \
+  libdpkg-perl \
+  liberror-perl \
+  libc6 \
+  libc-dev \
+  perl \
+  procps \
+  inotify-tools \
+  libssl1.1 \
+  perl-base \
+  zlib1g-dev \
+  libncurses-dev \
+  libsctp-dev \
+  xsltproc \
+  libxml2-utils \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for Erlang build
+ENV KERL_CONFIGURE_OPTIONS="--disable-debug --without-javac --without-wx --without-odbc --disable-hipe --without-jinterface --without-docs"
+ENV KERL_BUILD_DOCS="no"
+ENV KERL_DOC_TARGETS=""
+ENV KERL_INSTALL_HTMLDOCS="no"
+ENV KERL_INSTALL_MANPAGES="no"
+
+RUN git clone https://github.com/asdf-vm/asdf.git --branch v0.6.3 "$HOME"/.asdf && \
+    echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.bashrc && \
+    echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.profile
+
+ENV PATH="${PATH}:/root/.asdf/shims:/root/.asdf/bin"
+
+RUN mkdir -p /opt/erlang/epp_proxy
+WORKDIR /opt/erlang/epp_proxy
+
+COPY .tool-versions ./
+RUN asdf plugin-add erlang
+RUN ERLANG_VERSION=$(grep erlang .tool-versions | cut -d' ' -f2) && \
+    . $HOME/.asdf/asdf.sh && asdf install erlang $ERLANG_VERSION
+RUN asdf global erlang $(grep erlang .tool-versions | cut -d' ' -f2)
+RUN asdf plugin-add rebar
+RUN REBAR_VERSION=$(grep rebar .tool-versions | cut -d' ' -f2) && \
+    . $HOME/.asdf/asdf.sh && asdf install rebar $REBAR_VERSION
+RUN asdf global rebar $(grep rebar .tool-versions | cut -d' ' -f2)
+
+# Copy application files
+COPY rebar.config rebar.lock ./
+COPY config ./config
+COPY apps ./apps
+
+# Build the release
+RUN . $HOME/.asdf/asdf.sh && rebar3 as prod release
+
+# Second stage: runtime image
+FROM debian:bullseye-slim
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y -qq \
+  libssl1.1 \
+  libncurses6 \
+  libsctp1 \
+  procps \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+RUN mkdir -p /opt/erlang/epp_proxy
+WORKDIR /opt/erlang/epp_proxy
+
+# Copy the release from the build stage
+COPY --from=build /opt/erlang/epp_proxy/_build/prod/rel/epp_proxy ./
+
+# Create a non-root user to run the application
+RUN groupadd -r epp && useradd -r -g epp epp
+RUN chown -R epp:epp /opt/erlang/epp_proxy
+USER epp
+
+# Expose the EPP port
+EXPOSE 700
+
+# Set environment variables
+ENV RELX_REPLACE_OS_VARS=true
+ENV NODE_NAME=epp_proxy@127.0.0.1
+
+# Health check
+# HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+#   CMD ps aux | grep "beam" | grep -v grep || exit 1
+
+# Command to run the application
+CMD ["./bin/epp_proxy", "foreground"]

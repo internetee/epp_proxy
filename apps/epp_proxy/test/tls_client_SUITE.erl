@@ -222,15 +222,21 @@ send_data(Message, Socket) ->
 receive_data(Socket) ->
     case ssl:recv(Socket, 0, 1200) of
         {error, Reason} -> {error, Reason};
-        {ok, Data } ->
+        {ok, Data} ->
             EppEnvelope = binary:part(Data, {0, 4}),
             ReportedLength = binary:decode_unsigned(EppEnvelope, big),
-            binary:part(Data, {byte_size(Data), 4 - ReportedLength})
-        end.
+            % Extract the actual data, skipping the 4-byte length header
+            binary:part(Data, {4, byte_size(Data) - 4})
+    end.
 
 match_data(Data, Pattern) ->
     {ok, MatchPattern} = re:compile(Pattern),
-    {match, _Captured} = re:run(Data, MatchPattern).
+    case re:run(Data, MatchPattern) of
+        {match, _Captured} -> {match, _Captured};
+        nomatch -> 
+            ct:pal("Expected pattern '~s' not found in data:~n~p", [Pattern, Data]),
+            nomatch
+    end.
 
 hello_command() ->
     <<"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>",
