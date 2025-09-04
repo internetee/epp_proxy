@@ -16,8 +16,10 @@ jobs:
       
     - name: Install qlty
       run: |
-        curl -sSfL https://raw.githubusercontent.com/qlty-dev/qlty/main/install.sh | sh
-        echo "$HOME/.qlty/bin" >> $GITHUB_PATH
+        # Download qlty binary directly
+        curl -L https://github.com/qlty-sh/qlty/releases/latest/download/qlty-linux-amd64 -o qlty
+        chmod +x qlty
+        sudo mv qlty /usr/local/bin/
         
     - name: Run qlty check
       run: qlty check
