@@ -16,7 +16,7 @@ jobs:
       
     - name: Install qlty
       run: |
-        curl -sSfL https://raw.githubusercontent.com/qlty-sh/qlty/main/install.sh | sh
+        curl -sSfL https://raw.githubusercontent.com/qlty-dev/qlty/main/install.sh | sh
         echo "$HOME/.qlty/bin" >> $GITHUB_PATH
         
     - name: Run qlty check
