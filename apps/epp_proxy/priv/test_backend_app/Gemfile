@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 
 gem "puma"
-gem "roda"
+gem "roda", ">= 3.91.0"
 gem "rack-unreloader"
 gem "tilt"
 gem "rackup"
