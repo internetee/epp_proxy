@@ -44,18 +44,21 @@ ENV KERL_DOC_TARGETS=""
 ENV KERL_INSTALL_HTMLDOCS="no"
 ENV KERL_INSTALL_MANPAGES="no"
 
-RUN git clone https://github.com/asdf-vm/asdf.git --branch v0.6.3 "$HOME"/.asdf && \
-    echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.bashrc && \
-        echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.profile
+# Install asdf and add it to PATH
+RUN git clone https://github.com/asdf-vm/asdf.git --branch v0.6.3 /root/.asdf && \
+    echo '. /root/.asdf/asdf.sh' >> /root/.bashrc && \
+    echo '. /root/.asdf/asdf.sh' >> /root/.profile
 
-ENV PATH="${PATH}:/root/.asdf/shims:/root/.asdf/bin"
+ENV PATH="/root/.asdf/shims:/root/.asdf/bin:${PATH}"
 
 RUN mkdir -p /opt/erlang/epp_proxy
 WORKDIR /opt/erlang/epp_proxy
 
 COPY .tool-versions ./
+
+# Install plugins and tools with explicit sourcing of asdf.sh
 RUN asdf plugin-add erlang
-RUN . $HOME/.asdf/asdf.sh && asdf install
+RUN source /root/.asdf/asdf.sh && asdf install
 RUN asdf global erlang $(grep erlang .tool-versions | cut -d' ' -f2)
 RUN asdf plugin-add ruby
 RUN asdf plugin-add rebar
