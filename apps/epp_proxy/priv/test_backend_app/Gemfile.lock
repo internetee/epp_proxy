@@ -4,9 +4,9 @@ GEM
     nio4r (2.7.4)
     puma (6.6.0)
       nio4r (~> 2.0)
-    rack (3.1.12)
+    rack (3.2.4)
     rack-unreloader (2.1.0)
-    rackup (2.2.1)
+    rackup (2.3.1)
       rack (>= 3)
     roda (3.90.0)
       rack
@@ -14,13 +14,14 @@ GEM
 
 PLATFORMS
   aarch64-linux
+  x86_64-linux
 
 DEPENDENCIES
   puma
   rack-unreloader
-  rackup
+  rackup (>= 2.3.0)
   roda
   tilt
 
 BUNDLED WITH
-   2.4.10
+   2.3.27
