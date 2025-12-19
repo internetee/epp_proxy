@@ -105,6 +105,18 @@ Configuration for the application tries to emulate the mod_epp configuration as 
 to make migration easier. The configuration is placed in `config/sys.config` file, it takes a format
 of Erlang property list.
 
+There are three example configuration files in `config/`:
+
+* `sys.config` – default configuration used for real deployments. Values such as `tls_port`,
+  `epp_session_url` and certificate paths are typically provided via environment variables (eg.
+  `${TLS_PORT}`, `${EPP_SESSION_URL}`), so the same file can be reused across environments.
+* `docker.config` – configuration tuned for running inside Docker. It uses hardcoded ports,
+  certificate paths under `/opt/ca/...` and EPP endpoints pointing to the `epp` container
+  (eg. `http://epp:3000/epp/…`).
+* `test.config` – local development/test configuration. It enables `dev_mode`, uses local ports
+  and points EPP endpoints to `http://localhost:9292/...`, with test CA material under
+  `test_ca/`.
+
 *Configuration variables*
 
 | Variable name          | Expected values                    | Apache equivalent     | Definition
