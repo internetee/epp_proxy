@@ -94,9 +94,9 @@ jobs:
           event-type: deploy-service-staging
           client-payload: |
             {
-              "app_name": "epproxy",
+              "app_name": "eppproxy",
               "image_tag": "${{ steps.docker_build.outputs.IMAGE_TAG }}",
-              "namespace": "epproxy",
+              "namespace": "eppproxy",
               "pr_number": "${{ inputs.deploy_target == 'master' && '0' || inputs.pr_number }}",
               "source_repo": "internetee/epp_proxy"
             }
