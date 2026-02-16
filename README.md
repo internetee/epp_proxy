@@ -105,20 +105,33 @@ Configuration for the application tries to emulate the mod_epp configuration as 
 to make migration easier. The configuration is placed in `config/sys.config` file, it takes a format
 of Erlang property list.
 
+There are three example configuration files in `config/`:
+
+* `sys.config` – default configuration used for real deployments. Values such as `tls_port`,
+  `epp_session_url` and certificate paths are typically provided via environment variables (eg.
+  `${TLS_PORT}`, `${EPP_SESSION_URL}`), so the same file can be reused across environments.
+* `docker.config` – configuration tuned for running inside Docker. It uses hardcoded ports,
+  certificate paths under `/opt/ca/...` and EPP endpoints pointing to the `epp` container
+  (eg. `http://epp:3000/epp/…`).
+* `test.config` – local development/test configuration. It enables `dev_mode`, uses local ports
+  and points EPP endpoints to `http://localhost:9292/...`, with test CA material under
+  `test_ca/`.
+
 *Configuration variables*
 
-| Variable name        | Expected values                    | Apache equivalent     | Definition
------------------------|------------------------------------|-----------------------|--------------------------------------------
-| `dev_mode`           | `true`, `false`                    | None                  | Enables TCP access without TLS.
-| `tls_port`           | `700`                              | Listen                | At which port should we open a TLS socket. Default is 700.
-| `tcp_port`           | `70000`                            | Listen                | At which port should we open a TCP socket. Only in `dev_mode`.
-| `epp_session_url`    | `https://example.com/epp/session`  | EppSessionRoot        | HTTP address of the session endpoints including schema and port.
-| `epp_command_url`    | `https://example.com/epp/command`  | EppCommandRoot        | HTTP address of the command endpoints including schema and port.
-| `epp_error_url`      | `https://example.com/epp/error`    | EppErrorRoot          | HTTP address of the error endpoints including schema and port.
-| `cacertfile_path`    | `/opt/ca/ca.crt.pem`               | SSLCACertificateFile  | Where is the client root CA located. Can be inside apps/epp_proxy/priv or absolute path.
-| `certfile_path`      | `/opt/ca/server.crt.pem`           | SSLCertificateFile    | Where is the server certificate located. Can be inside apps/epp_proxy/priv or absolute path.
-| `keyfile_path`       | `/opt/ca/server.key.pem`           | SSLCertificateKeyFile | Where is the server key located. Can be inside apps/epp_proxy/priv or absolute path.
-| `crlfile_path`       | `/opt/ca/crl.pem`                  | SSLCARevocationFile   | Where is the CRL file located. Can be inside apps/epp_proxy/priv or absolute path. When not set, not CRL check is performed.
+| Variable name          | Expected values                    | Apache equivalent     | Definition
+-------------------------|------------------------------------|-----------------------|--------------------------------------------
+| `dev_mode`             | `true`, `false`                    | None                  | Enables TCP access without TLS.
+| `tls_port`             | `700`                              | Listen                | At which port should we open a TLS socket. Default is 700.
+| `tcp_port`             | `70000`                            | Listen                | At which port should we open a TCP socket. Only in `dev_mode`.
+| `epp_session_url`      | `https://example.com/epp/session`  | EppSessionRoot        | HTTP address of the session endpoints including schema and port.
+| `epp_command_url`      | `https://example.com/epp/command`  | EppCommandRoot        | HTTP address of the command endpoints including schema and port.
+| `epp_error_url`        | `https://example.com/epp/error`    | EppErrorRoot          | HTTP address of the error endpoints including schema and port.
+| `require_client_certs` | `true`, `false`                    | None                  | Allows client to connect to epp_proxy without client certificate using TLS.
+| `cacertfile_path`      | `/opt/ca/ca.crt.pem`               | SSLCACertificateFile  | Where is the client root CA located. Can be inside apps/epp_proxy/priv or absolute path.
+| `certfile_path`        | `/opt/ca/server.crt.pem`           | SSLCertificateFile    | Where is the server certificate located. Can be inside apps/epp_proxy/priv or absolute path.
+| `keyfile_path`         | `/opt/ca/server.key.pem`           | SSLCertificateKeyFile | Where is the server key located. Can be inside apps/epp_proxy/priv or absolute path.
+| `crlfile_path`         | `/opt/ca/crl.pem`                  | SSLCARevocationFile   | Where is the CRL file located. Can be inside apps/epp_proxy/priv or absolute path. When not set, not CRL check is performed.
 
 
 Migrating from mod_epp

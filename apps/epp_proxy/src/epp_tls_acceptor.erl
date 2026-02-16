@@ -21,9 +21,10 @@ start_link(Port) ->
 			  []).
 
 init(Port) ->
+    RequireClientCerts = require_client_certs(),
     DefaultOptions = [binary, {packet, raw},
 		      {active, false}, {reuseaddr, true},
-		      {verify, verify_peer}, {depth, 1},
+		      {verify, verify_peer}, {fail_if_no_peer_cert, RequireClientCerts}, {depth, 1},
 		      {cacertfile, ca_cert_file()}, {certfile, cert_file()},
 		      {keyfile, key_file()}],
     Options = handle_crl_check_options(DefaultOptions),
@@ -80,6 +81,14 @@ key_file() ->
     case application:get_env(epp_proxy, keyfile_path) of
       undefined -> undefined;
       {ok, KeyFile} -> epp_util:path_for_file(KeyFile)
+    end.
+
+%% Whether client certificates are required.
+%% If not configured, default to true to preserve existing behavior.
+require_client_certs() ->
+    case application:get_env(epp_proxy, require_client_certs) of
+      undefined -> true;
+      {ok, Bool} -> Bool
     end.
 
 crl_file() ->
