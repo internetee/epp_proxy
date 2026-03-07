@@ -1,0 +1,24 @@
+name: Code Quality Check
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  qlty:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      
+    - name: Install qlty
+      run: |
+        # Install qlty using official install script
+        curl https://qlty.sh | sh
+        echo "$HOME/.qlty/bin" >> $GITHUB_PATH
+        
+    - name: Run qlty check
+      run: qlty check
