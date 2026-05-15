@@ -1,0 +1,24 @@
+# epp_proxy local development and tests (Debian bookworm + OpenSSL 3).
+#
+#   docker compose build
+#   ./scripts/docker-ct.sh
+#   docker compose run --rm epp_proxy bash -l -c "source ~/.asdf/asdf.sh && rebar3 shell --config config/test.config"
+#
+# For the full registry stack (epp_proxy + Rails EPP app), use
+# registry/docker-images/docker-compose.yml instead.
+
+services:
+  epp_proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    image: epp_proxy:dev
+    working_dir: /opt/erlang/epp_proxy
+    volumes:
+      - .:/opt/erlang/epp_proxy
+    ports:
+      - "700:700"
+      - "3333:3333"
+    stdin_open: true
+    tty: true
+    command: ["tail", "-f", "/dev/null"]

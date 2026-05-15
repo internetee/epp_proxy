@@ -1,42 +1,48 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
+
+COPY ./docker/apt/sources.list /etc/apt/
 
 RUN apt-get update && apt-get install -y \
   wget \
   git \
-  build-essential=* \
-  libncurses5-dev=* \
-  automake=* \
-  autoconf=* \
-  curl=* \
-  ca-certificates=* \
-  libssl-dev=* \
-  libreadline-dev=* \
-  libdpkg-perl=* \
-  liberror-perl=* \
-  libc6=* \
+  build-essential \
+  libncurses-dev \
+  automake \
+  autoconf \
+  curl \
+  ca-certificates \
+  libssl3 \
+  libssl-dev \
+  libreadline-dev \
+  libdpkg-perl \
+  liberror-perl \
+  libc6 \
   libc-dev \
-  perl=* \
-  procps=* \
-  inotify-tools=* \
-  libssl1.1=* \
-  perl-base=* \
+  perl \
+  procps \
+  inotify-tools \
+  perl-base \
   zlib1g-dev \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/asdf-vm/asdf.git --branch v0.6.3 "$HOME"/.asdf && \
+RUN git clone https://github.com/asdf-vm/asdf.git --branch v0.14.0 "$HOME"/.asdf && \
     echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.bashrc && \
-        echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.profile
+    echo '. $HOME/.asdf/asdf.sh' >> "$HOME"/.profile
 
 ENV PATH="${PATH}:/root/.asdf/shims:/root/.asdf/bin"
 
 RUN mkdir -p /opt/erlang/epp_proxy/release
 WORKDIR /opt/erlang/epp_proxy
 
+ENV GIT_TERMINAL_PROMPT=0
+
 COPY .tool-versions ./
-RUN asdf plugin-add erlang
-RUN asdf install
-RUN asdf global erlang $(grep erlang .tool-versions | cut -d' ' -f2)
-RUN asdf plugin-add ruby
-RUN asdf plugin-add rebar
-RUN asdf install
+RUN . "$HOME"/.asdf/asdf.sh && \
+    asdf plugin add erlang && \
+    asdf plugin add ruby && \
+    asdf plugin add rebar && \
+    asdf install && \
+    asdf global erlang "$(grep erlang .tool-versions | awk '{print $2}')" && \
+    asdf global ruby "$(grep ruby .tool-versions | awk '{print $2}')" && \
+    asdf global rebar "$(grep rebar .tool-versions | awk '{print $2}')"
