@@ -1,6 +1,6 @@
 {application, epp_proxy,
  [{description, "epp_proxy: EPP to HTTP translator"},
-  {vsn, "git"},
+  {vsn, "0.1.0"},
   {registered, []},
   {mod, {epp_proxy_app, []}},
   {applications,
