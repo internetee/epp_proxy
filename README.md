@@ -1,6 +1,9 @@
 epp_proxy
 =====
 
+[![Maintainability](https://qlty.sh/gh/internetee/projects/epp_proxy/maintainability.svg)](https://qlty.sh/gh/internetee/projects/epp_proxy)
+[![Code Coverage](https://qlty.sh/gh/internetee/projects/epp_proxy/coverage.svg)](https://qlty.sh/gh/internetee/projects/epp_proxy)
+
 An application that translates EPP over TCP connection into set of predefined HTTP calls.
 
 Serves as direct replacement for mod_epp (https://github.com/mod-epp/mod-epp), and tries to
