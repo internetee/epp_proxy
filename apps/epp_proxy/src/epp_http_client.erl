@@ -17,9 +17,10 @@ request(#epp_request{} = Request) ->
     case hackney:request(Method, URL, Headers, Payload,
 			 Options)
 	of
-      {error, Error} -> log_and_return_canned(Error, Request);
-      {Status, _StatusCode, _Headers, ClientRef} ->
-	  {ok, Body} = hackney:body(ClientRef), {Status, Body}
+      {error, Error} ->
+	  log_and_return_canned(Error, Request);
+      {ok, StatusCode, _Headers, Body} ->
+	  {StatusCode, Body}
     end.
 
 request_builder(Map) -> request_from_map(Map).

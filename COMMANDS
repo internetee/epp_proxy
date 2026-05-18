@@ -1,0 +1,28 @@
+# Docker (from epp_proxy/ — see docker-compose.yml)
+
+- Run all tests (OpenSSL 3):
+./scripts/docker-ct.sh
+
+- Build image:
+docker compose build
+
+- Run specific test suite:
+docker compose run --rm epp_proxy bash -l -c "source ~/.asdf/asdf.sh && rebar3 ct --sys_config config/test.config --suite apps/epp_proxy/test/epp_http_client_SUITE"
+
+- Run all tests manually (start test backend in another shell or use docker-ct.sh):
+docker compose run --rm epp_proxy bash -l -c "source ~/.asdf/asdf.sh && rebar3 ct --sys_config config/test.config"
+
+- Debugging shell:
+docker compose run --rm epp_proxy bash -l -c "source ~/.asdf/asdf.sh && rebar3 shell --config config/test.config"
+
+- Show loaded configuration (in Erlang shell):
+application:get_all_env(epp_proxy).
+
+- Quit shell:
+halt().
+
+- Production tarball:
+docker compose run --rm epp_proxy bash -l -c "source ~/.asdf/asdf.sh && rebar3 as prod tar"
+
+# Full registry stack (epp_proxy + Rails EPP) — ../docker-images/docker-compose.yml
+cd ../docker-images && docker compose up epp epp_proxy

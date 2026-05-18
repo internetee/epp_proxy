@@ -56,9 +56,40 @@ accept the connections and spin off workers, those are supervised in "one for on
 
 Build
 -----
-You need Erlang/OTP release 21 and Rebar3 to build it. No other versions than 21 were tested.
 
-    $ rebar3 compile
+### Requirements
+
+| Component | Version |
+|-----------|---------|
+| Erlang/OTP | **26+** (see `.tool-versions`, e.g. 26.2.5.5) |
+| Rebar3 | 3.23+ |
+| OpenSSL | **3.x** (linked at Erlang build time and available at runtime) |
+| Ruby (tests only) | see `.tool-versions` (for the Roda test backend) |
+
+Releases are built and tested on **Debian bookworm** with OpenSSL 3 (see `Dockerfile`, `Dockerfile.test`,
+`docker-compose.yml`).
+
+**Do not** compile legacy OTP 23 on modern hosts (Debian trixie, Ubuntu 24.04, etc.) that only ship
+OpenSSL 3 — use Docker or install OTP 26 against OpenSSL 3 (asdf/kerl).
+
+### Dependencies
+
+Key Hex deps (see `rebar.config`): **lager 3.9.2** (OTP 26-compatible), **hackney ~> 4.0**, erlsom.
+
+After changing versions in `rebar.config`, refresh the lockfile and rebuild:
+
+```bash
+rebar3 upgrade
+rebar3 compile
+```
+
+Commit both `rebar.config` and `rebar.lock`. `rebar3 get-deps` alone does not apply version bumps.
+
+### Compile and release
+
+```bash
+rebar3 compile
+```
 
 epp_proxy should be deployed as a self-contained Erlang application (release). You can create one
 with one of the following commands:
@@ -106,6 +137,19 @@ Configuration for the application tries to emulate the mod_epp configuration as 
 to make migration easier. The configuration is placed in `config/sys.config` file, it takes a format
 of Erlang property list.
 
+Example configuration files in `config/`:
+
+* `sys.config` – default configuration used for real deployments. Values such as `tls_port`,
+  `epp_session_url` and certificate paths are typically provided via environment variables (eg.
+  `${TLS_PORT}`, `${EPP_SESSION_URL}`), so the same file can be reused across environments.
+* `docker.config` – configuration tuned for running inside Docker. It uses hardcoded ports,
+  certificate paths under `/opt/ca/...` and EPP endpoints pointing to the `epp` container
+  (eg. `http://epp:3000/epp/…`).
+* `test.config` – local development/test configuration. It enables `dev_mode`, uses local ports
+  and points EPP endpoints to `http://localhost:9292/...`, with test CA material under
+  `test_ca/`.
+* `syscopy.config` – example staging-style config with fixed URLs and certificate paths.
+
 *Configuration variables*
 
 | Variable name        | Expected values                    | Apache equivalent     | Definition
@@ -120,6 +164,7 @@ of Erlang property list.
 | `certfile_path`      | `/opt/ca/server.crt.pem`           | SSLCertificateFile    | Where is the server certificate located. Can be inside apps/epp_proxy/priv or absolute path.
 | `keyfile_path`       | `/opt/ca/server.key.pem`           | SSLCertificateKeyFile | Where is the server key located. Can be inside apps/epp_proxy/priv or absolute path.
 | `crlfile_path`       | `/opt/ca/crl.pem`                  | SSLCARevocationFile   | Where is the CRL file located. Can be inside apps/epp_proxy/priv or absolute path. When not set, not CRL check is performed.
+| `require_client_certs` | `true`, `false`                  | None                  | When `true` (default), TLS clients must present a valid client certificate. When `false`, client certificates are optional but verified if provided. Changing this at runtime requires restarting `epp_tls_acceptor` (see tests).
 
 
 Migrating from mod_epp
@@ -136,9 +181,10 @@ Checklist of steps to perform if you want to migrate from mod_epp, but still use
 
 Testing
 ----
-The application comes with test suite written with common_test. For integration
-tests, there is a small Roda application located in `apps/epp_proxy/priv/test_backend_app`.
-It has been written with Ruby 3.2.2.
+The application comes with a Common Test suite. For integration tests, there is a small Roda
+application in `apps/epp_proxy/priv/test_backend_app` (Ruby version in `.tool-versions`).
+
+CI runs tests in Docker via `.github/workflows/run-automatest-tests.yml` (bookworm, OpenSSL 3).
 
 There is also a number of generated ssl certificates that are used only for testing. Those are
 valid until 2029 and they are located in `apps/epp_proxy/priv/test_ca`. The password for test CA
@@ -152,23 +198,37 @@ $ /bin/bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle install"
 $ /bin/bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle exec rackup --pid pidfile -D"
 ```
 
-The easiest way to run tests is using Docker:
+The easiest way to run tests is using Docker from this directory (Debian bookworm +
+OpenSSL 3 — see `docker-compose.yml`):
 
 ```bash
-# Run all tests
-docker compose run --rm epp_proxy bash -c "cd /opt/erlang/epp_proxy && rebar3 ct"
+# Build image and run full CT suite (starts Ruby test backend automatically)
+./scripts/docker-ct.sh
 
-# Run a specific test suite
-docker compose run --rm epp_proxy bash -c "cd /opt/erlang/epp_proxy && rebar3 ct --suite apps/epp_proxy/test/epp_http_client_SUITE"
+# Or step by step:
+docker compose build
+docker compose run --rm epp_proxy bash -l -c "source ~/.asdf/asdf.sh && rebar3 ct --sys_config config/test.config"
 
-# Start a shell for debugging
-docker compose run --rm epp_proxy bash -c "cd /opt/erlang/epp_proxy && rebar3 shell"
+# Run a specific test suite (start test backend first — see docker-ct.sh)
+docker compose run --rm epp_proxy bash -l -c "source ~/.asdf/asdf.sh && rebar3 ct --sys_config config/test.config --suite apps/epp_proxy/test/tls_client_SUITE"
 
-# Then in the Erlang shell:
-application:get_all_env(epp_proxy).
-# To exit the shell:
-halt().
+# TLS suites: tls_client_SUITE (mutual TLS), tls_client_optional_cert_SUITE (optional client certs)
+
+# Production release tarball
+docker compose run --rm epp_proxy bash -l -c "source ~/.asdf/asdf.sh && rebar3 as prod tar"
+
+# Interactive shell
+docker compose run --rm epp_proxy bash -l -c "source ~/.asdf/asdf.sh && rebar3 shell --config config/test.config"
 ```
+
+Verify OpenSSL linkage:
+
+```bash
+docker compose run --rm epp_proxy bash -l -c 'openssl version && erl -noshell -eval "io:format(\"~p~n\", [crypto:info_lib()]), halt()."'
+```
+
+To run epp_proxy together with the registry Rails EPP app, use
+`registry/docker-images/docker-compose.yml` (`config/docker.config`, port 700).
 
 After you finish testing, you can stop the process by reading the stored pid:
 

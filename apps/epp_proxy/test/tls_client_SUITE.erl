@@ -30,14 +30,16 @@ init_per_suite(Config) ->
     application:ensure_all_started(epp_proxy),
     application:ensure_all_started(hackney),
     CWD = code:priv_dir(epp_proxy),
-    Options = [binary,
-               {certfile, filename:join(CWD, "test_ca/certs/client.crt.pem")},
-	       {keyfile, filename:join(CWD, "test_ca/private/client.key.pem")},
-               {active, false}],
-    RevokedOptions = [binary,
-               {certfile, filename:join(CWD, "test_ca/certs/revoked.crt.pem")},
-	       {keyfile, filename:join(CWD, "test_ca/private/revoked.key.pem")},
-               {active, false}],
+    Options = client_ssl_options(
+                CWD,
+                filename:join(CWD, "test_ca/certs/client.crt.pem"),
+                filename:join(CWD, "test_ca/private/client.key.pem")
+               ),
+    RevokedOptions = client_ssl_options(
+                       CWD,
+                       filename:join(CWD, "test_ca/certs/revoked.crt.pem"),
+                       filename:join(CWD, "test_ca/private/revoked.key.pem")
+                      ),
     [{ssl_options, Options}, {revoked_options, RevokedOptions} | Config].
 
 end_per_suite(Config) ->
@@ -206,6 +208,15 @@ error_test_case(Config) ->
     match_data(ErrorResponse,
                "Command syntax error."),
     ok.
+
+%% Client presents a certificate (server requires mutual TLS) but does not
+%% verify the server chain/hostname — this suite tests epp_proxy, not PKI.
+client_ssl_options(_CWD, CertFile, KeyFile) ->
+    [binary,
+     {verify, verify_none},
+     {certfile, CertFile},
+     {keyfile, KeyFile},
+     {active, false}].
 
 %% Helper functions:
 length_of_data(Data) ->

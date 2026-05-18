@@ -1,7 +1,7 @@
-deb http://deb.debian.org/debian/ bullseye main contrib non-free
-deb http://deb.debian.org/debian-security/ bullseye-security main contrib non-free
-deb http://deb.debian.org/debian/ bullseye-updates main contrib non-free
+deb http://deb.debian.org/debian bookworm main contrib non-free
+deb http://deb.debian.org/debian-security bookworm-security main contrib non-free
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free
 
-# Legacy
-# deb http://deb.debian.org/debian/ buster main contrib non-free
-# deb http://deb.debian.org/debian/ buster-backports main contrib non-free
+# Legacy (OpenSSL 1.1) — bullseye
+# deb http://deb.debian.org/debian bullseye main contrib non-free
+# deb http://deb.debian.org/debian-security bullseye-security main contrib non-free
