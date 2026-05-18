@@ -1,7 +1,8 @@
 epp_proxy
 =====
 
-[![Build Status](https://travis-ci.org/internetee/epp_proxy.svg?branch=master)](https://travis-ci.org/internetee/epp_proxy)
+[![Maintainability](https://qlty.sh/gh/internetee/projects/epp_proxy/maintainability.svg)](https://qlty.sh/gh/internetee/projects/epp_proxy)
+[![Code Coverage](https://qlty.sh/gh/internetee/projects/epp_proxy/coverage.svg)](https://qlty.sh/gh/internetee/projects/epp_proxy)
 
 An application that translates EPP over TCP connection into set of predefined HTTP calls.
 
