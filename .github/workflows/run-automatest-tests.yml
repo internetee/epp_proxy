@@ -16,9 +16,6 @@ jobs:
       - name: Start the container
         run: docker run -d --name tester proxy-tester
       
-      - name: Install rebar dependencies
-        run: docker exec -i tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 as test get-deps && rebar3 plugins upgrade"
-
       - name: Integrated Ruby app setup
         run: docker exec -d tester bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle install && bundle exec rackup"
 
