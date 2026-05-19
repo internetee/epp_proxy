@@ -55,7 +55,7 @@ jobs:
       - uses: qltysh/qlty-action/coverage@v2
         if: success()
         with:
-          token: ${{ secrets.QLTY_TOKEN }}
+          token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
           files: cov.xml
           format: cobertura
           add-prefix: apps/epp_proxy/src/
