@@ -35,21 +35,16 @@ jobs:
         if: success()
         run: |
           docker exec -i tester bash -l -c 'source /root/.asdf/asdf.sh && cd /opt/erlang/epp_proxy && \
-            COVERTOOL_EBIN=$(find _build -type d -path "*/covertool/ebin" 2>/dev/null | head -1) && \
-            test -n "$COVERTOOL_EBIN" || { echo "covertool plugin not built; run rebar3 as test compile first"; exit 1; } && \
             mkdir -p _build/test/covertool && \
-            erl -noshell -pa "$COVERTOOL_EBIN" -eval "\
-              ok = rr(covertool),\
-              {ok,_} = cover:start(),\
-              ok = cover:import(\"_build/test/cover/ct.coverdata\"),\
-              ok = covertool:generate_report(\
-                #config{appname=epp_proxy,\
-                        output=\"_build/test/covertool/epp_proxy.covertool.xml\",\
-                        sources=[\"apps/epp_proxy/src\"],\
-                        beams=[\"_build/test/lib/epp_proxy/ebin\"],\
-                        prefix_len=0},\
-                cover:imported_modules()),\
-              halt(0)."'
+            (rebar3 as test covertool generate -s || \
+            (COVERTOOL_EBIN=$(find _build -type d -path "*/covertool/ebin" | head -1) && \
+             test -n "$COVERTOOL_EBIN" && \
+             erl -noshell -pa "$COVERTOOL_EBIN" -eval "\
+               {ok,_} = cover:start(),\
+               ok = cover:import(\"_build/test/cover/ct.coverdata\"),\
+               Config = {config, epp_proxy, 0, no_import, \"_build/test/covertool/epp_proxy.covertool.xml\", false, [\"apps/epp_proxy/src\"], [\"_build/test/lib/epp_proxy/ebin\"], no_callback},\
+               ok = covertool:generate_report(Config, cover:imported_modules()),\
+               halt(0)."))'
 
       - name: Copy coverage report from container
         if: success()
