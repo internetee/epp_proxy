@@ -33,3 +33,29 @@ jobs:
           
       - name: Show test coverage
         run: docker exec -i tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 cover --verbose"
+
+      - name: Generate Cobertura report
+        if: always()
+        run: docker exec -i tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 as test cobertura"
+
+      - name: Copy coverage report from container
+        if: always()
+        run: |
+          docker cp tester:/opt/erlang/epp_proxy/_build/test/cover/cov.xml ./cov.xml
+          docker cp tester:/opt/erlang/epp_proxy/_build/test/cover ./coverage || true
+
+      - uses: qltysh/qlty-action/coverage@v2
+        with:
+          token: ${{ secrets.QLTY_TOKEN }}
+          files: cov.xml
+          format: cobertura
+          add-prefix: apps/epp_proxy/src/
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: |
+            cov.xml
+            coverage/
+          if-no-files-found: ignore
