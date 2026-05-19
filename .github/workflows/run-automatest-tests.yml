@@ -17,7 +17,7 @@ jobs:
         run: docker run -d --name tester proxy-tester
       
       - name: Install rebar dependencies
-        run: docker exec -i tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 as test get-deps"
+        run: docker exec -i tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 as test get-deps && rebar3 plugins upgrade"
 
       - name: Integrated Ruby app setup
         run: docker exec -d tester bash -l -c "cd apps/epp_proxy/priv/test_backend_app && bundle install && bundle exec rackup"
@@ -29,10 +29,10 @@ jobs:
 
       - name: Run tests
         run: |
-          docker exec -i -e DEBUG=1 tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 ct --sys_config config/test.config --readable=false --cover --verbose=true"
+          docker exec -i -e DEBUG=1 tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 as test ct --sys_config config/test.config --readable=false --cover --verbose=true"
           
       - name: Show test coverage
-        run: docker exec -i tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 cover --verbose"
+        run: docker exec -i tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 as test cover --verbose"
 
       - name: Generate Cobertura report
         if: success()
