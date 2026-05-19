@@ -58,7 +58,7 @@ jobs:
           token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
           files: cov.xml
           format: cobertura
-          add-prefix: apps/epp_proxy/src/
+          strip-prefix: /opt/erlang/epp_proxy/
 
       - uses: actions/upload-artifact@v4
         if: always()
