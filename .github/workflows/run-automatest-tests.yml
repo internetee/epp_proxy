@@ -35,13 +35,13 @@ jobs:
         run: docker exec -i tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 cover --verbose"
 
       - name: Generate Cobertura report
-        if: always()
-        run: docker exec -i tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 as test cobertura"
+        if: success()
+        run: docker exec -i tester bash -l -c "source /root/.asdf/asdf.sh && rebar3 as test covertool generate -s"
 
       - name: Copy coverage report from container
-        if: always()
+        if: success()
         run: |
-          docker cp tester:/opt/erlang/epp_proxy/_build/test/cover/cov.xml ./cov.xml
+          docker cp tester:/opt/erlang/epp_proxy/_build/test/covertool/epp_proxy.covertool.xml ./cov.xml
           docker cp tester:/opt/erlang/epp_proxy/_build/test/cover ./coverage || true
 
       - uses: qltysh/qlty-action/coverage@v2
